@@ -39,7 +39,8 @@ async function getSkinAndRender(uuid: string): Promise<Buffer> {
     const { properties: [{ value }] } = await response.json();
     const { textures: { SKIN: { url, metadata } } } = JSON.parse(Buffer.from(value, 'base64').toString());
     const skinResponse = await fetch(url);
-    return renderSkin(Buffer.from(await skinResponse.arrayBuffer()), metadata?.model === 'slim');
+    const isSlim = metadata?.model === 'slim' ? true : false;
+    return renderSkin(Buffer.from(await skinResponse.arrayBuffer()), isSlim, true);
   } catch (error) {
     console.error('Error getting/rendering skin:', error);
     throw error;

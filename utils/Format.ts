@@ -4,7 +4,7 @@ function formatNetWorth(networth?: number): string {
     if (networth >= 1000000000) return (networth/1000000000).toFixed(1) + 'b';
     if (networth >= 1000000) return (networth/1000000).toFixed(1) + 'm';
     if (networth >= 1000) return (networth/1000).toFixed(1) + 'k';
-    return networth.toFixed(1);
+    return networth.toFixed(2);
   }
   
   function getFKDRColor(fkdr?: number): string {
