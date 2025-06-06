@@ -17,7 +17,6 @@
     "canvas": "^3.1.0",
     "express": "^5.1.0",
     "sharp": "^0.33.5",
-    "skyhelper-networth": "^2.2.2",
-   "@statsify/skin-renderer": "file:./skin-renderer/"
+    "skyhelper-networth": "^2.2.2"
   }
 }
