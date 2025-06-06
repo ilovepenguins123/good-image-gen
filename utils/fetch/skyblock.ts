@@ -28,7 +28,6 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       }
       
       const activeProfile = hypixelData.profiles.find((profile: any) => profile.selected) || hypixelData.profiles[0];
-      console.log(activeProfile.id)
       if (!activeProfile || !activeProfile.members) {
         return {
           networth: 0,
@@ -36,12 +35,10 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
           profileData: null
         };
       }
-      console.log(activeProfile.profile_id)
       const museumResponse = await fetch(`https://api.hypixel.net/v2/skyblock/museum?profile=${activeProfile.profile_id}&key=${apikey}`);
       const museumData = await museumResponse.json();
       
       if (!museumData.success) {
-        console.log("a")
         console.error("Hypixel API error:", museumData.cause);
         return {
           networth: 0,

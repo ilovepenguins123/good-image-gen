@@ -93,8 +93,8 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
 
   const playerInfoX = centerX - (width * 0.29) - (width * 0.065);
   devlog('Creating player info bubble');
-  createBubble(ctx as any, playerInfoX, centerY + (height * 0.02), bubbleWidth * 1.2, height * 0.6, '', '', 0.4);
-  bubbleMC(ctx as any, playerInfoX + (width * 0.42), centerY - (height * 0.36), bubbleWidth * 3.575, height * 0.11, playerNameDisplay, '', 0.5);
+  createBubble(ctx as any, playerInfoX, centerY + (height * 0.035), bubbleWidth * 1.2, height * 0.6, '', '', 0.4);
+  bubbleMC(ctx as any, playerInfoX , centerY - (height * 0.36), bubbleWidth * 1.2, height * 0.055, playerNameDisplay, '', 0.5);
 
   devlog('Creating stats bubbles');
   const statsX = centerX - (width * 0.12);

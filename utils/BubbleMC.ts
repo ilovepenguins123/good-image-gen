@@ -65,7 +65,7 @@ function bubbleMC(ctx: CanvasRenderingContext2D, x: number, y: number, width: nu
   }
 
   if (text) {
-    const fontSize = 32;
+    const fontSize = 28;
     ctx.font = `${fontSize}px "Minecraft"`;
     const startY = title ? y + height/6 : y;
 
