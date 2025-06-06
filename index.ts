@@ -6,22 +6,39 @@ import { gzipSync } from 'node:zlib';
 import blur from './utils/effects/blur.ts';
 import createBubble from './utils/createBubble.ts';
 import MCQuery from './utils/fetch/MCQuery.ts';
-import { renderSkin } from './skin-renderer/index.cjs';
 import bubbleMC from './utils/BubbleMC.ts';
 import { formatNetWorth, getFKDRColor, formatPlayerName, formatNumber } from './utils/Format.ts';
 import saturate from './utils/effects/saturate.ts';
 import fetchAllStats from './utils/fetch/all.ts';
 import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const fonts = [
-  ['./fonts/Minecraft.ttf', 'Minecraft'],
-  ['./fonts/MinecraftBold.ttf', 'MinecraftBold'],
-  ['./fonts/Poppins-Bold.ttf', 'Poppins'],
-  ['./fonts/Poppins-Regular.ttf', 'Poppins'],
-  ['./fonts/Product Sans Regular.ttf', 'ProductSans'],
-  ['./fonts/Product Sans Bold.ttf', 'ProductSansBold']
+  ['Minecraft.ttf', 'Minecraft'],
+  ['MinecraftBold.ttf', 'MinecraftBold'],
+  ['Poppins-Bold.ttf', 'Poppins'],
+  ['Poppins-Regular.ttf', 'Poppins'],
+  ['Product Sans Regular.ttf', 'ProductSans'],
+  ['Product Sans Bold.ttf', 'ProductSansBold']
 ];
-fonts.forEach(([path, family]) => registerFont(path, { family }));
+
+fonts.forEach(([filename, family]) => {
+  try {
+    const fontPath = resolve(__dirname, 'fonts', filename);
+    if (!fs.existsSync(fontPath)) {
+      throw new Error(`Font file not found: ${fontPath}`);
+    }
+    registerFont(fontPath, { family });
+    devlog('Font registered', { path: fontPath, family });
+  } catch (error) {
+    console.error(`Failed to register font ${filename}:`, error);
+    throw error;
+  }
+});
 
 function devlog(stage: string, data?: any) {
   if (process.env.PROD !== 'TRUE') {
@@ -35,17 +52,16 @@ function devlog(stage: string, data?: any) {
 
 async function getSkinAndRender(uuid: string): Promise<Buffer> {
   try {
-    const response = await fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`);
-    const { properties: [{ value }] } = await response.json();
-    const { textures: { SKIN: { url, metadata } } } = JSON.parse(Buffer.from(value, 'base64').toString());
-    const skinResponse = await fetch(url);
-    const isSlim = metadata?.model === 'slim' ? true : false;
-    return renderSkin(Buffer.from(await skinResponse.arrayBuffer()), isSlim, true);
+    const response = await fetch(`https://nmsr.nickac.dev/fullbody/${uuid}`);
+    const buffer = await response.arrayBuffer();
+    return Buffer.from(buffer);
   } catch (error) {
     console.error('Error getting/rendering skin:', error);
-    throw error;
+    // Return a default skin or throw a more specific error
+    throw new Error('Failed to get or render skin: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
+
 
 async function generateBubbleImage(backgroundPath: string, outputPath: string, ign: string, apikey: string, width: number = 1920, height: number = 1080, watermark: string, censor: boolean): Promise<Buffer> {
   devlog('Starting image generation', { ign, width, height });
@@ -241,10 +257,15 @@ function drawLevelProgressBar(ctx: CanvasRenderingContext2D, stats: any, width: 
 }
 
 function drawPlayerSkin(ctx: CanvasRenderingContext2D, image: Image, width: number, height: number) {
-  const scale = width / 1920 * 0.6;
-  const scaledWidth = image.width * scale;
-  const scaledHeight = image.height * scale;
-  ctx.drawImage(image, (width * 0.13) - scaledWidth/2, (height * 0.49) - scaledHeight/2, scaledWidth * 1.2, scaledHeight * 1.2);
+  try {
+    const scale = width / 1920 * 0.55;
+    const scaledWidth = image.width * scale;
+    const scaledHeight = image.height * scale;
+    ctx.drawImage(image, (width * 0.13) - scaledWidth/2, (height * 0.49) - scaledHeight/2, scaledWidth * 1.2, scaledHeight * 1.2);
+  } catch (error) {
+    console.error('Error drawing player skin:', error);
+    // Draw a placeholder or skip skin rendering
+  }
 }
 
 const app = express();
