@@ -13,6 +13,7 @@ import fetchAllStats from './utils/fetch/all.ts';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
+import getBearerIGN from './utils/BearerIGN.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -63,9 +64,9 @@ async function getSkinAndRender(uuid: string): Promise<Buffer> {
 }
 
 
-async function generateBubbleImage(backgroundPath: string, outputPath: string, ign: string, apikey: string, width: number = 1920, height: number = 1080, watermark: string, censor: boolean): Promise<Buffer> {
+async function generateBubbleImage(backgroundPath: string, outputPath: string, ign: string, apikey: string, width: number = 1920, height: number = 1080, watermark: string, censor: boolean, bearer: string): Promise<Buffer> {
   devlog('Starting image generation', { ign, width, height });
-  
+  let username = ign;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
@@ -81,13 +82,25 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   ctx.drawImage(tempCanvas, 0, 0);
 
   devlog('Fetching player data');
-  const uuidResponse = await MCQuery(ign);
-  if (uuidResponse === "Invalid Username") {
-    return Buffer.from("Invalid Username");
+  let uuidResponse;
+  if (!bearer) {
+    console.log(bearer)
+    uuidResponse = await MCQuery(ign);
+    if (uuidResponse === "Invalid Username") {
+      return Buffer.from("Invalid Username");
+    }
+  } else {
+    uuidResponse = await getBearerIGN(bearer);
+    if (uuidResponse === "Invalid Username") {
+      return Buffer.from("Invalid Username");
+    }
+    if (typeof uuidResponse === 'object' && uuidResponse.ign) {
+      username = uuidResponse.ign;
+    }
   }
   devlog('MCQuery response', uuidResponse);
   
-  const { generalstats, sbstats, guildStats, capes } = await fetchAllStats(apikey, ign);
+  const { generalstats, sbstats, guildStats, capes } = await fetchAllStats(apikey, ign, bearer);
   devlog('Stats fetched', { 
     hasGeneralStats: !!generalstats, 
     hasSkyblockStats: !!sbstats, 
@@ -104,7 +117,7 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   const rightStatsX = centerX + (width * 0.075);
   const rightStatsX2 = centerX + (width * 0.26);
 
-  const playerName = uuidResponse?.ign === 'Steve' ? ign : uuidResponse?.name;
+  const playerName = username === 'Steve' ? ign : username;
   const pluses = typeof (generalstats as any)?.rank?.rank === 'string' ? ((generalstats as any).rank.rank.match(/\+/g)?.length || 0) : 0;
   const playerNameDisplay = formatPlayerName(
     (generalstats as any)?.rank || { rank: "NONE", color: "gray", plusColor: "yellow" },
@@ -229,7 +242,10 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   if (uuidResponse?.id) {
     devlog('Rendering player skin');
     const skinImage = await loadImage(await getSkinAndRender(uuidResponse.id));
-
+    drawPlayerSkin(ctx as any, skinImage, width, height);
+  } else if (bearer && typeof uuidResponse === 'object' && 'uuid' in uuidResponse) {
+    devlog('Rendering player skin from bearer');
+    const skinImage = await loadImage(await getSkinAndRender(uuidResponse.uuid));
     drawPlayerSkin(ctx as any, skinImage, width, height);
   }
   saturate(ctx, 1.5);
@@ -280,6 +296,65 @@ function drawPlayerSkin(ctx: CanvasRenderingContext2D, image: Image, width: numb
 const app = express();
 const router = express.Router();
 const port = 3000;
+router.get("/bearer/:bearer", async (req: any, res: any) => {
+  const bearer = req.params.bearer;
+  if (!bearer) {
+    return res.status(400).send("Missing bearer parameter");
+  }
+
+  const watermark = req.query.watermark as string || "";
+  const censor = req.query.censor?.toString().toLowerCase() === "true" || false;
+  const resolution = "1920x1080";
+  const [width, height] = resolution.split("x").map(Number);
+
+  if (!width || !height || width < 100 || height < 100) {
+    return res.status(400).send("Invalid resolution");
+  }
+
+  try {
+    console.log(`Generating image for bearer token...`);
+    const backgroundFiles = fs.readdirSync('./backgrounds');
+    if (!backgroundFiles.length) {
+      throw new Error("No background files found");
+    }
+    const randomBackground = `./backgrounds/${backgroundFiles[Math.floor(Math.random() * backgroundFiles.length)]}`;
+    console.log(`Using background: ${randomBackground}`);
+    
+    // Get IGN from bearer token first
+    const bearerResponse = await getBearerIGN(bearer);
+    if (bearerResponse === "Invalid Username") {
+      return res.status(404).send("Invalid Bearer Token");
+    }
+    
+    const imageBuffer = await generateBubbleImage(randomBackground, "", typeof bearerResponse === 'object' && bearerResponse.ign ? bearerResponse.ign : "", process.env.HYPIXEL_API_KEY || "", width, height, watermark, censor, bearer);
+    
+    if (imageBuffer.toString() === "Invalid Username") {
+      return res.status(404).send("Invalid Username");
+    }
+    
+    if (!imageBuffer || imageBuffer.length === 0) {
+      throw new Error("Generated image buffer is empty");
+    }
+    
+    console.log(`Image generated successfully, size: ${imageBuffer.length} bytes`);
+    const compressedBuffer = gzipSync(imageBuffer);
+    console.log(`Image compressed, size: ${compressedBuffer.length} bytes`);
+    
+    res.set({
+      "Content-Type": "image/png",
+      "Content-Encoding": "gzip",
+      "Content-Length": compressedBuffer.length
+    });
+    res.send(compressedBuffer);
+  } catch (error) {
+    console.error("Error generating image:", error);
+    if (error instanceof Error) {
+      res.status(500).send(`Error generating image: ${error.message}`);
+    } else {
+      res.status(500).send("Error generating image");
+    }
+  }
+});
 
 router.get("/stats/:ign", async (req: any, res: any) => {
   const ign = req.params.ign;
@@ -289,7 +364,6 @@ router.get("/stats/:ign", async (req: any, res: any) => {
 
   const watermark = req.query.watermark as string || "";
   const censor = req.query.censor?.toString().toLowerCase() === "true" || false;
-
   const resolution = "1920x1080";
   const [width, height] = resolution.split("x").map(Number);
 
@@ -306,7 +380,7 @@ router.get("/stats/:ign", async (req: any, res: any) => {
     const randomBackground = `./backgrounds/${backgroundFiles[Math.floor(Math.random() * backgroundFiles.length)]}`;
     console.log(`Using background: ${randomBackground}`);
     
-    const imageBuffer = await generateBubbleImage(randomBackground, "", ign, process.env.HYPIXEL_API_KEY, width, height, watermark, censor);
+    const imageBuffer = await generateBubbleImage(randomBackground, "", ign || "", process.env.HYPIXEL_API_KEY || "", width, height, watermark, censor, "");
     
     if (imageBuffer.toString() === "Invalid Username") {
       return res.status(404).send("Invalid Username");

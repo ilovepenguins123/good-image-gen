@@ -4,6 +4,7 @@ import fetchBedwarsStats from './bedwars.ts';
 import fetchSkyblockStats from './skyblock.ts';
 import fetchGuildStats from './guild.ts';
 import { fetchCapes } from './capes.ts';
+import getcapesmc from './getcapesmc.ts';
 if (!parentPort) {
   throw new Error('This module must be run as a worker thread');
 }
@@ -42,7 +43,11 @@ parentPort.on('message', async (task) => {
         result = await fetchGuildStats(task.apikey, task.uuid);
         break;
       case 'capes':
-        result = await fetchCapes(task.apikey, task.uuid);
+        if (task.bearer) {
+          result = await getcapesmc(task.bearer);
+        } else {
+          result = await fetchCapes(task.apikey, task.uuid);
+        }
         break;
       default:
         throw new Error(`Unknown task type: ${task.type}`);
@@ -51,7 +56,6 @@ parentPort.on('message', async (task) => {
     if (!parentPort) {
       throw new Error('Lost connection to parent thread');
     }
-    // Return the result back to the main thread
     parentPort.postMessage({ id: task.id, result });
   } catch (error) {
     if (!parentPort) {

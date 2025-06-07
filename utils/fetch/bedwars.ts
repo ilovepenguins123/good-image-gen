@@ -9,8 +9,8 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         lastLogin: player?.lastLogin ? new Date(player.lastLogin).toLocaleString('en-US', { timeZone: 'EST' }) : "None",
         leveling: {
           level: 0,
-          experienceneeded: 0,
           experience: 0,
+          experienceneeded: 2500
         },
         ranksgifted: 0,
         bedwars: {
@@ -37,8 +37,8 @@ export function fetchBedwarsStats(key: string, uuid: string) {
           losses: 0,
           wlr: 0
         },
-        rank: player.rank || { rank: "NONE", color: "gray", plusColor: "yellow" },
-        level: player.level || 0,
+        rank: { rank: "NONE", color: "gray", plusColor: "yellow" },
+        level: 0
       };
 
       if (uuid === "8667ba71b85a4004af54457a9734eed7") {
@@ -96,10 +96,16 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         stats.duels.losses = duelsStats.losses;
         stats.duels.wlr = Number((Number(duelsStats.wins) / Number(duelsStats.losses)).toFixed(2));
       }
-      if (player.rank) {
-        stats.rank.rank = player.rank.replace("_PLUS", "+");
-      } else if (player.newPackageRank) {
-        stats.rank.rank = player.newPackageRank.replace("_PLUS", "+");
+      if (player?.rank) {
+        stats.rank = {
+          ...stats.rank,
+          rank: player.rank.replace("_PLUS", "+")
+        };
+      } else if (player?.newPackageRank) {
+        stats.rank = {
+          ...stats.rank,
+          rank: player.newPackageRank.replace("_PLUS", "+")
+        };
       }
       stats.rank.plusColor = player.rankPlusColor || "yellow";
       switch (stats.rank.rank) {

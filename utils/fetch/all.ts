@@ -3,7 +3,7 @@ import MCQuery from './MCQuery.ts';
 import { getCache, setCache } from '../cache.ts';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-
+import getcapesmc from './getcapesmc.ts';
 function devlog(stage: string, data?: any) {
   if (process.env.PROD !== 'TRUE') {
     if (data) {
@@ -49,7 +49,7 @@ function runTask(task: any) {
   });
 }
 
-async function fetchAllStats(apikey: string, ign: string) {
+async function fetchAllStats(apikey: string, ign: string, bearer: string) {
   const cacheKey = `${apikey}:${ign}`;
   devlog('Checking cache', { cacheKey });
   
@@ -66,7 +66,11 @@ async function fetchAllStats(apikey: string, ign: string) {
     devlog('Fetching UUID');
     const uuidResponse = await MCQuery(ign);
     devlog('UUID response', uuidResponse);
-    
+
+    if (uuidResponse === "Invalid Username") {
+      throw new Error('Invalid Username');
+    }
+
     if (!uuidResponse?.id) {
       throw new Error('Failed to get UUID');
     }
@@ -78,7 +82,7 @@ async function fetchAllStats(apikey: string, ign: string) {
       { type: 'bedwars', apikey, uuid },
       { type: 'skyblock', apikey, uuid },
       { type: 'guildStats', apikey, uuid },
-      { type: 'capes', apikey, uuid }
+      { type: 'capes', apikey, uuid, bearer }
     ];
 
     devlog('Running tasks in parallel');
