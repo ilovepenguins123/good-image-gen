@@ -8,7 +8,7 @@ async function getBearerIGN(bearer: string) {
             }
         });
         return {
-            ign: res.data.name,
+            name: res.data.name,
             uuid: res.data.id
         }
     } catch (error) {

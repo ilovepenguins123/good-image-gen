@@ -89,13 +89,17 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
     if (uuidResponse === "Invalid Username") {
       return Buffer.from("Invalid Username");
     }
+    if (typeof uuidResponse === 'object' && uuidResponse.name) {
+      username = uuidResponse.name;
+    }
   } else {
     uuidResponse = await getBearerIGN(bearer);
     if (uuidResponse === "Invalid Username") {
       return Buffer.from("Invalid Username");
     }
-    if (typeof uuidResponse === 'object' && uuidResponse.ign) {
-      username = uuidResponse.ign;
+    console.log(uuidResponse)
+    if (typeof uuidResponse === 'object' && uuidResponse.name) {
+      username = uuidResponse.name;
     }
   }
   devlog('MCQuery response', uuidResponse);
