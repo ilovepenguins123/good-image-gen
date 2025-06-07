@@ -113,9 +113,9 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   const bubbleWidth = width * 0.156;
   const bubbleHeight = height * 0.139;
   const playerInfoX = centerX - (width * 0.29) - (width * 0.065);
-  const statsX = centerX - (width * 0.12);
-  const rightStatsX = centerX + (width * 0.075);
-  const rightStatsX2 = centerX + (width * 0.26);
+  const statsX = centerX - (width * 0.12) + 25;
+  const rightStatsX = centerX + (width * 0.075 * 1.5) + 25;
+  const rightStatsX2 = centerX + (width * 0.26 * 1.25) + 25;
 
   const playerName = username === 'Steve' ? ign : username;
   const pluses = typeof (generalstats as any)?.rank?.rank === 'string' ? ((generalstats as any).rank.rank.match(/\+/g)?.length || 0) : 0;
@@ -130,8 +130,8 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   createBubble(ctx as any, centerX, centerY, width * 0.833 * 1.15, height * 0.741 * 1.2, '', '', 0.3)
 
   devlog('Creating player info bubble');
-  createBubble(ctx as any, playerInfoX, centerY + (height * 0.035), bubbleWidth * 1.2, height * 0.6, '', '', 0.4);
-  bubbleMC(ctx as any, playerInfoX , centerY - (height * 0.36), bubbleWidth * 1.2, height * 0.055, playerNameDisplay, '', 0.5);
+  createBubble(ctx as any, playerInfoX, centerY + (height * 0.075), bubbleWidth * 1.2, height * 0.6, '', '', 0.4);
+  bubbleMC(ctx as any, playerInfoX * 4.2 , centerY - (height * 0.36), bubbleWidth * 4.025, height * 0.055, playerNameDisplay, '', 0.5, 32);
 
   devlog('Creating stats bubbles');
   createBubble(ctx as any, statsX, centerY - (height * 0.15), bubbleWidth * 1.2, height * 0.231, [
@@ -152,7 +152,7 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
     { text: `${((generalstats as any)?.leveling?.experience ?? 0).toLocaleString()} / <color=#89cff0>${((generalstats as any)?.leveling?.experienceneeded ?? 2500).toLocaleString()}</color>`, effects: 'bold' },
   ], 'Network Level', 0.4);
   if ((generalstats as any)?.ranksgifted > 0 ) {
-    bubbleMC(ctx as any, playerInfoX, centerY - (height * 0.3), bubbleWidth, height * 0.231, `<color=#FFD700>Ranks gifted: ${(generalstats as any)?.ranksgifted ?? "0"}</color>`, '', 0);
+    bubbleMC(ctx as any, playerInfoX, centerY - (height * 0.25), bubbleWidth, height * 0.231, `<color=#FFD700>Ranks gifted: ${(generalstats as any)?.ranksgifted ?? "0"}</color>`, '', 0);
   }
 
   drawLevelProgressBar(ctx as any, generalstats, width, height);
@@ -232,8 +232,8 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
       px! += scaledWidth + spacing;
     });
   }
-  bubbleMC(ctx as any, playerInfoX + (width * 0.25), centerY - (height * 0.36), bubbleWidth * 1.2, height * 0.11, `<color=#FFD700>First Login:</color> ${generalstats.firstLogin || "None"}`, '', 0.0, 24);
-  bubbleMC(ctx as any, playerInfoX + (width * 0.55), centerY - (height * 0.36), bubbleWidth * 1.2, height * 0.11, `<color=#FFD700>Last Login:</color> ${generalstats.lastLogin || "None"}`, '', 0.0, 24);
+  bubbleMC(ctx as any, width * 0.15, centerY - (height * 0.36), bubbleWidth * 1.2, height * 0.11, `<color=#FFD700>First Login:</color> ${generalstats.firstLogin || "None"}`, '', 0.0, 24);
+  bubbleMC(ctx as any, width * 0.15, centerY - (height * 0.3), bubbleWidth * 1.2, height * 0.11, `<color=#FFD700>Last Login:</color> ${generalstats.lastLogin || "None"}`, '', 0.0, 24);
   if (watermark) {
     devlog('Adding watermark');
     bubbleMC(ctx as any, playerInfoX + (width * 0.42), centerY - (height * 0.015), bubbleWidth * 1.2, height * 0.11, `<color=#00FFFF>${watermark}</color>`, '', 0.0);
@@ -259,7 +259,7 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
 function drawLevelProgressBar(ctx: CanvasRenderingContext2D, stats: any, width: number, height: number) {
   const barWidth = width * 0.13;
   const barHeight = height * 0.019;
-  const barX = (width * 0.575) - barWidth/2;
+  const barX = (width * 0.625) - barWidth/2;
   const barY = height * 0.4;
   const progress = stats?.leveling?.experience && stats?.leveling?.experienceneeded ? 
     stats.leveling.experience / stats.leveling.experienceneeded : 0;
@@ -286,7 +286,7 @@ function drawPlayerSkin(ctx: CanvasRenderingContext2D, image: Image, width: numb
     const scale = width / 1920 * 0.55;
     const scaledWidth = image.width * scale;
     const scaledHeight = image.height * scale;
-    ctx.drawImage(image, (width * 0.13) - scaledWidth/2, (height * 0.49) - scaledHeight/2, scaledWidth * 1.2, scaledHeight * 1.2);
+    ctx.drawImage(image, (width * 0.13) - scaledWidth/2, (height * 0.55) - scaledHeight/2, scaledWidth * 1.2, scaledHeight * 1.2);
   } catch (error) {
     console.error('Error drawing player skin:', error);
     // Draw a placeholder or skip skin rendering
