@@ -132,7 +132,6 @@ export function fetchBedwarsStats(key: string, uuid: string) {
           stats.rank.color = "gray";
       }
       stats.rank.rank.replace(" ]", "]");
-      console.log(stats)
       return stats;
     })
     .catch(error => {
