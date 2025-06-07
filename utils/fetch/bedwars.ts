@@ -85,9 +85,9 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         stats.bedwars.wlr = Number(bedwarsStats.wins_bedwars) / Number(bedwarsStats.losses_bedwars);
       }
       if (skywarsStats) {
-        stats.skywars.level = skywarsStats.levelFormatted.replace(/[^0-9]/g, "");
+        stats.skywars.level = skywarsStats.levelFormatted.replace(/[§][0-9a-fk-or]/g, "");
+        console.log(skywarsStats.levelFormatted)
         stats.skywars.coins = skywarsStats.coins;
-
         stats.skywars.kills = skywarsStats.kills;
         stats.skywars.deaths = skywarsStats.deaths;
       }
