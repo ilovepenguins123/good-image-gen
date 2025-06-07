@@ -54,10 +54,10 @@ async function getSkinAndRender(uuid: string): Promise<Buffer> {
   try {
     const response = await fetch(`https://nmsr.nickac.dev/fullbody/${uuid}`);
     const buffer = await response.arrayBuffer();
+    console.log(uuid)
     return Buffer.from(buffer);
   } catch (error) {
     console.error('Error getting/rendering skin:', error);
-    // Return a default skin or throw a more specific error
     throw new Error('Failed to get or render skin: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
@@ -82,6 +82,9 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
 
   devlog('Fetching player data');
   const uuidResponse = await MCQuery(ign);
+  if (uuidResponse === "Invalid Username") {
+    return Buffer.from("Invalid Username");
+  }
   devlog('MCQuery response', uuidResponse);
   
   const { generalstats, sbstats, guildStats, capes } = await fetchAllStats(apikey, ign);
@@ -216,6 +219,8 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
       px! += scaledWidth + spacing;
     });
   }
+  bubbleMC(ctx as any, playerInfoX + (width * 0.25), centerY - (height * 0.36), bubbleWidth * 1.2, height * 0.11, `<color=#FFD700>First Login:</color> ${generalstats.firstLogin || "None"}`, '', 0.0, 24);
+  bubbleMC(ctx as any, playerInfoX + (width * 0.55), centerY - (height * 0.36), bubbleWidth * 1.2, height * 0.11, `<color=#FFD700>Last Login:</color> ${generalstats.lastLogin || "None"}`, '', 0.0, 24);
   if (watermark) {
     devlog('Adding watermark');
     bubbleMC(ctx as any, playerInfoX + (width * 0.42), centerY - (height * 0.015), bubbleWidth * 1.2, height * 0.11, `<color=#00FFFF>${watermark}</color>`, '', 0.0);
@@ -302,6 +307,10 @@ router.get("/stats/:ign", async (req: any, res: any) => {
     console.log(`Using background: ${randomBackground}`);
     
     const imageBuffer = await generateBubbleImage(randomBackground, "", ign, process.env.HYPIXEL_API_KEY, width, height, watermark, censor);
+    
+    if (imageBuffer.toString() === "Invalid Username") {
+      return res.status(404).send("Invalid Username");
+    }
     
     if (!imageBuffer || imageBuffer.length === 0) {
       throw new Error("Generated image buffer is empty");

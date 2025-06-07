@@ -5,6 +5,8 @@ export function fetchBedwarsStats(key: string, uuid: string) {
       let player = data.player;
       let stats = {
         uuid: uuid,
+        firstLogin: player?.firstLogin ? new Date(player.firstLogin).toLocaleString('en-US', { timeZone: 'EST' }) : "None",
+        lastLogin: player?.lastLogin ? new Date(player.lastLogin).toLocaleString('en-US', { timeZone: 'EST' }) : "None",
         leveling: {
           level: 0,
           experienceneeded: 0,
@@ -35,11 +37,8 @@ export function fetchBedwarsStats(key: string, uuid: string) {
           losses: 0,
           wlr: 0
         },
-        rank: {
-          rank: "NONE",
-          color: "white",
-          plusColor: "yellow",
-        }
+        rank: player.rank || { rank: "NONE", color: "gray", plusColor: "yellow" },
+        level: player.level || 0,
       };
 
       if (uuid === "8667ba71b85a4004af54457a9734eed7") {
@@ -86,7 +85,6 @@ export function fetchBedwarsStats(key: string, uuid: string) {
       }
       if (skywarsStats) {
         stats.skywars.level = skywarsStats.levelFormatted.replace(/[§][0-9a-fk-or]/g, "");
-        console.log(skywarsStats.levelFormatted)
         stats.skywars.coins = skywarsStats.coins;
         stats.skywars.kills = skywarsStats.kills;
         stats.skywars.deaths = skywarsStats.deaths;
@@ -128,6 +126,7 @@ export function fetchBedwarsStats(key: string, uuid: string) {
           stats.rank.color = "gray";
       }
       stats.rank.rank.replace(" ]", "]");
+      console.log(stats)
       return stats;
     })
     .catch(error => {

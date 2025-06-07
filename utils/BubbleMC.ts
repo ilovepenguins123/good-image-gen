@@ -1,4 +1,4 @@
-function bubbleMC(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, text: string = '', title: string, opacity: number = 0.4, textColor: string = 'white', titleColor: string = 'white'): void {
+function bubbleMC(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, text: string = '', title: string, opacity: number = 0.4, fontSize: number = 28): void {
   // Pre-calculate commonly used values
   const halfWidth = width / 2;
   const halfHeight = height / 2;
@@ -24,7 +24,7 @@ function bubbleMC(ctx: CanvasRenderingContext2D, x: number, y: number, width: nu
   ctx.textBaseline = 'middle';
   
   if (title) {
-    const titleLines = Array.isArray(title) ? title : [{text: title, color: titleColor}];
+    const titleLines = Array.isArray(title) ? title : [{text: title}];
     const lineHeight = 32;
     const totalHeight = lineHeight * titleLines.length;
     const startY = y - height/6 - totalHeight/2;
@@ -51,27 +51,26 @@ function bubbleMC(ctx: CanvasRenderingContext2D, x: number, y: number, width: nu
             ctx.fillText(content, currentX, startY + lineHeight * i);
             currentX += width;
           } else {
-            ctx.fillStyle = line.color || titleColor;
+            ctx.fillStyle = 'white';
             const width = ctx.measureText(segment).width;
             ctx.fillText(segment, currentX, startY + lineHeight * i);
             currentX += width;
           }
         }
       } else {
-        ctx.fillStyle = line.color || titleColor;
+        ctx.fillStyle = 'white';
         ctx.fillText(line.text, x, startY + lineHeight * i);
       }
     }
   }
 
   if (text) {
-    const fontSize = 28;
     ctx.font = `${fontSize}px "Minecraft"`;
     const startY = title ? y + height/6 : y;
 
     const segments = text.split(/(<color=[^>]+>|<\/color>)/);
     const parts = [];
-    let currentColor = textColor;
+    let currentColor = 'white';
     let totalWidth = 0;
 
     for (let i = 0; i < segments.length; i++) {
@@ -81,7 +80,7 @@ function bubbleMC(ctx: CanvasRenderingContext2D, x: number, y: number, width: nu
       if (segment.startsWith('<color=')) {
         currentColor = segment.slice(7, -1);
       } else if (segment === '</color>') {
-        currentColor = textColor;
+        currentColor = 'white';
       } else {
         const width = ctx.measureText(segment).width;
         parts.push({
