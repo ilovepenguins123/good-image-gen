@@ -104,7 +104,15 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   }
   devlog('MCQuery response', uuidResponse);
   
-  const { generalstats, sbstats, guildStats, capes } = await fetchAllStats(apikey, ign, bearer);
+  // Get UUID for fetchAllStats
+  let uuid: string | undefined;
+  if (bearer && typeof uuidResponse === 'object' && uuidResponse.uuid) {
+    uuid = uuidResponse.uuid;
+  } else if (!bearer && typeof uuidResponse === 'object' && uuidResponse.id) {
+    uuid = uuidResponse.id;
+  }
+  
+  const { generalstats, sbstats, guildStats, capes } = await fetchAllStats(apikey, ign, bearer, uuid);
   devlog('Stats fetched', { 
     hasGeneralStats: !!generalstats, 
     hasSkyblockStats: !!sbstats, 
@@ -330,7 +338,7 @@ router.get("/bearer/:bearer", async (req: any, res: any) => {
       return res.status(404).send("Invalid Bearer Token");
     }
     
-    const imageBuffer = await generateBubbleImage(randomBackground, "", typeof bearerResponse === 'object' && bearerResponse.ign ? bearerResponse.ign : "", process.env.HYPIXEL_API_KEY || "", width, height, watermark, censor, bearer);
+    const imageBuffer = await generateBubbleImage(randomBackground, "", typeof bearerResponse === 'object' && bearerResponse.name ? bearerResponse.name : "", process.env.HYPIXEL_API_KEY || "", width, height, watermark, censor, bearer);
     
     if (imageBuffer.toString() === "Invalid Username") {
       return res.status(404).send("Invalid Username");

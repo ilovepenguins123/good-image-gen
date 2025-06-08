@@ -49,7 +49,7 @@ function runTask(task: any) {
   });
 }
 
-async function fetchAllStats(apikey: string, ign: string, bearer: string) {
+async function fetchAllStats(apikey: string, ign: string, bearer: string, uuid?: string) {
   const cacheKey = `${apikey}:${ign}`;
   devlog('Checking cache', { cacheKey });
   
@@ -63,26 +63,31 @@ async function fetchAllStats(apikey: string, ign: string, bearer: string) {
     devlog('Starting stats fetch');
     const startTime = performance.now();
 
-    devlog('Fetching UUID');
-    const uuidResponse = await MCQuery(ign);
-    devlog('UUID response', uuidResponse);
+    let finalUuid = uuid;
+    
+    if (!finalUuid) {
+      devlog('Fetching UUID');
+      const uuidResponse = await MCQuery(ign);
+      devlog('UUID response', uuidResponse);
 
-    if (uuidResponse === "Invalid Username") {
-      throw new Error('Invalid Username');
-    }
+      if (uuidResponse === "Invalid Username") {
+        throw new Error('Invalid Username');
+      }
 
-    if (!uuidResponse?.id) {
-      throw new Error('Failed to get UUID');
+      if (!uuidResponse?.id) {
+        throw new Error('Failed to get UUID');
+      }
+      
+      finalUuid = uuidResponse.id;
     }
     
-    const uuid = uuidResponse.id;
-    devlog('UUID obtained', { uuid });
+    devlog('UUID obtained', { uuid: finalUuid });
 
     const tasks = [
-      { type: 'bedwars', apikey, uuid },
-      { type: 'skyblock', apikey, uuid },
-      { type: 'guildStats', apikey, uuid },
-      { type: 'capes', apikey, uuid, bearer }
+      { type: 'bedwars', apikey, uuid: finalUuid },
+      { type: 'skyblock', apikey, uuid: finalUuid },
+      { type: 'guildStats', apikey, uuid: finalUuid },
+      { type: 'capes', apikey, uuid: finalUuid, bearer }
     ];
 
     devlog('Running tasks in parallel');
