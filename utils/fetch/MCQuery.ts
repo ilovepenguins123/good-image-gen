@@ -1,5 +1,5 @@
 async function MCQuery(username: string): Promise<any> {
-  let response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`);
+  let response = await fetch(`https://mowojang.matdoes.dev/users/profiles/minecraft/${username}`);
   if (!response.ok) {
     return "Invalid Username";
   }

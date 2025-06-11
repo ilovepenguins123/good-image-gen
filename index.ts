@@ -104,7 +104,6 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   }
   devlog('MCQuery response', uuidResponse);
   
-  // Get UUID for fetchAllStats
   let uuid: string | undefined;
   if (bearer && typeof uuidResponse === 'object' && uuidResponse.uuid) {
     uuid = uuidResponse.uuid;
