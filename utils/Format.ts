@@ -25,6 +25,13 @@ function formatNetWorth(networth?: number): string {
        return `<color=${rank.color}>[</color><color=white>${rank.rank}</color> <color=${rank.color}>] ${ign}</color>`.replace(" ]", "]");
     }
 
+    if (rank.rank === "MVP++") {
+      console.log('Rank object:', rank);
+      const mainColor = rank.color || "#FFAA00";
+
+      return `<color=${mainColor}>[MVP</color><color=${rank.plusColor}>++</color><color=${mainColor}>] ${ign}</color>`.replace(" ]", "]");
+    }
+
     return `<color=${rank.color}>[${rank.rank.replace("+", "")}</color><color=${rank.plusColor}>${"+".repeat(Math.max(0, pluses))}</color><color=${rank.color}>] ${ign}</color>`.replace(" ]", "]");
   }
   export { formatNetWorth, getFKDRColor, formatPlayerName, formatNumber };

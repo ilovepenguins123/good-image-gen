@@ -147,7 +147,7 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   devlog('Player name formatted', { playerName, playerNameDisplay });
 
   devlog('Creating main bubble');
-  createBubble(ctx as any, centerX, centerY, width * 0.833 * 1.15, height * 0.741 * 1.2, '', '', 0.3)
+  createBubble(ctx as any, centerX, centerY, width * 0.833 * 1.15, height * 0.741 * 1.2, '', '', 0.45)
 
   devlog('Creating player info bubble');
   createBubble(ctx as any, playerInfoX, centerY + (height * 0.075), bubbleWidth * 1.2, height * 0.6, '', '', 0.4);

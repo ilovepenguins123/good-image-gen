@@ -5,7 +5,6 @@ function savePlayer(uuid: string, data: any) {
   return data;
 }
 
-
 export function fetchBedwarsStats(key: string, uuid: string) {
   return fetch(`https://api.hypixel.net/player?key=${key}&uuid=${uuid}`)
     .then(response => response.json())
@@ -104,22 +103,24 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         stats.duels.losses = duelsStats.losses;
         stats.duels.wlr = Number((Number(duelsStats.wins) / Number(duelsStats.losses)).toFixed(2));
       }
-      if (player?.monthlyPackageRank && player.monthlyPackageRank !== 'NONE') {
-        stats.rank.rank = "MVP++";
-        stats.rank.color = "yellow";
-      }
       if (player?.rank) {
-        stats.rank = {
-          ...stats.rank,
-          rank: player.rank.replace("_PLUS", "+")
-        };
+        stats.rank.rank = player.rank.replace("_PLUS", "+")
       } else if (player?.newPackageRank) {
-        stats.rank = {
-          ...stats.rank,
-          rank: player.newPackageRank.replace("_PLUS", "+")
-        };
+        stats.rank.rank = player.newPackageRank.replace("_PLUS", "+")
+        if (player?.monthlyPackageRank && player.monthlyPackageRank !== 'NONE') {
+          stats.rank.rank = "MVP++";
+          stats.rank.color = "#FFAA00";
+        }
       }
       stats.rank.plusColor = player.rankPlusColor || "yellow";
+
+      // Ensure rank doesn't have more than two plus signs
+      if (stats.rank.rank.includes("+++")) {
+        stats.rank.rank = stats.rank.rank.replace("+++", "++");
+      }
+
+      console.log(stats.rank)
+
       switch (stats.rank.rank) {
         case "YOUTUBER":
           stats.rank.rank = "YOUTUBE"
@@ -143,7 +144,15 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         default:
           stats.rank.color = "gray";
       }
-      stats.rank.rank.replace(" ]", "]");
+      if (stats.rank.plusColor === "DARK_RED") stats.rank.plusColor = "#8B0000";
+      else if (stats.rank.plusColor === "RED") stats.rank.plusColor = "#FF0000";
+      else if (stats.rank.plusColor === "GOLD") stats.rank.plusColor = "#FFD700";
+      else if (stats.rank.plusColor === "YELLOW") stats.rank.plusColor = "#FFFF00";
+      else if (stats.rank.plusColor === "GREEN") stats.rank.plusColor = "#00FF00";
+      else if (stats.rank.plusColor === "AQUA") stats.rank.plusColor = "#00FFFF";
+      else if (stats.rank.plusColor === "BLUE") stats.rank.plusColor = "#0000FF";
+      else if (stats.rank.plusColor === "PURPLE") stats.rank.plusColor = "#800080";
+      else if (stats.rank.plusColor === "PINK") stats.rank.plusColor = "#FFC0CB";
       return stats;
     })
     .catch(error => {

@@ -46,7 +46,8 @@ function bubbleMC(ctx: CanvasRenderingContext2D, x: number, y: number, width: nu
           const colorMatch = segment.match(/<color=(?:#)?([^>]+)>(.*?)<\/color>/);
           if (colorMatch) {
             const [, color, content] = colorMatch;
-            ctx.fillStyle = color.startsWith('#') ? color : `#${color}`;
+            console.log('Title color:', color, 'content:', content);
+            ctx.fillStyle = color.toLowerCase();
             const width = ctx.measureText(content).width;
             ctx.fillText(content, currentX, startY + lineHeight * i);
             currentX += width;
@@ -79,22 +80,23 @@ function bubbleMC(ctx: CanvasRenderingContext2D, x: number, y: number, width: nu
 
       if (segment.startsWith('<color=')) {
         currentColor = segment.slice(7, -1);
+        console.log('Text color:', currentColor);
       } else if (segment === '</color>') {
         currentColor = 'white';
       } else {
         const width = ctx.measureText(segment).width;
         parts.push({
           text: segment,
-          color: currentColor,
+          color: currentColor.toLowerCase(),
           width
         });
         totalWidth += width;
       }
     }
 
-
     let currentX = x - totalWidth/2;
     for (const part of parts) {
+      console.log('Drawing part:', part.text, 'with color:', part.color);
       ctx.fillStyle = part.color;
       ctx.fillText(part.text, currentX + part.width/2, startY);
       currentX += part.width;
