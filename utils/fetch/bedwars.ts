@@ -62,7 +62,7 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         console.error("Failed to retrieve player data.");
         return stats;
       }
-      savePlayer(uuid, player);
+      //savePlayer(uuid, player);
       let bedwarsStats = player.stats.Bedwars;
       let skywarsStats = player.stats.SkyWars;
       let duelsStats = player.stats.Duels;
