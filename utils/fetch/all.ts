@@ -3,7 +3,7 @@ import MCQuery from './MCQuery.ts';
 import { getCache, setCache } from '../cache.ts';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import getcapesmc from './getcapesmc.ts';
+
 function devlog(stage: string, data?: any) {
   if (process.env.PROD !== 'TRUE') {
     if (data) {
@@ -86,15 +86,21 @@ async function fetchAllStats(apikey: string, ign: string, bearer: string, uuid?:
     const tasks = [
       { type: 'bedwars', apikey, uuid: finalUuid },
       { type: 'skyblock', apikey, uuid: finalUuid },
-      { type: 'guildStats', apikey, uuid: finalUuid },
-      { type: 'capes', apikey, uuid: finalUuid, bearer }
+      { type: 'guildStats', apikey, uuid: finalUuid }
     ];
+
+    // Only fetch capes if no bearer token (since bearer capes are fetched by getBearerIGN)
+    if (!bearer) {
+      tasks.push({ type: 'capes', apikey, uuid: finalUuid });
+    }
 
     devlog('Running tasks in parallel');
     const results = await Promise.all(tasks.map(task => runTask(task)));
     devlog('All tasks completed');
     
-    const [generalstats, sbstats, guildStats, capes] = results;
+    const [generalstats, sbstats, guildStats, capes] = bearer 
+      ? [...results, "None"] // Add "None" for capes when using bearer
+      : results;
 
     const endTime = performance.now();
     const timeTaken = endTime - startTime;

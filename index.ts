@@ -83,6 +83,8 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
 
   devlog('Fetching player data');
   let uuidResponse;
+  let bearerCapes: any = "None";
+  
   if (!bearer) {
     console.log(bearer)
     uuidResponse = await MCQuery(ign);
@@ -100,6 +102,9 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
     console.log(uuidResponse)
     if (typeof uuidResponse === 'object' && uuidResponse.name) {
       username = uuidResponse.name;
+      if (uuidResponse.capes) {
+        bearerCapes = uuidResponse.capes;
+      }
     }
   }
   devlog('MCQuery response', uuidResponse);
@@ -112,11 +117,15 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   }
   
   const { generalstats, sbstats, guildStats, capes } = await fetchAllStats(apikey, ign, bearer, uuid);
+  
+  // Use bearer capes if available, otherwise use the fetched capes
+  const finalCapes = bearer ? bearerCapes : capes;
+  
   devlog('Stats fetched', { 
     hasGeneralStats: !!generalstats, 
     hasSkyblockStats: !!sbstats, 
     hasGuildStats: !!guildStats, 
-    capesCount: capes === "None" ? 0 : capes.length 
+    capesCount: finalCapes === "None" ? 0 : finalCapes.length 
   });
 
   const centerX = width / 2;
@@ -198,15 +207,15 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
     ], 'Duels', 0.4);
   }
 
-  if (capes !== "None") {
-    devlog('Processing capes', { count: capes.length });
-    const loadedCapes = await Promise.all(capes.map(async (cape: any) => {
+  if (finalCapes !== "None") {
+    devlog('Processing capes', { count: finalCapes.length });
+    const loadedCapes = await Promise.all(finalCapes.map(async (cape: any) => {
       const capeImage = await loadImage(Buffer.from(cape.image));
       return { ...cape, image: capeImage };
     }));
     devlog('Capes loaded');
 
-    const capeCount = capes.length;
+    const capeCount = finalCapes.length;
     const baseScale = width / 1920 * 1.5;
     const scaleMultiplier = Math.max(0.5, Math.min(1.2, 10 / Math.min(capeCount, 14)));
     const scale = baseScale * scaleMultiplier;

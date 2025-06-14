@@ -1,3 +1,11 @@
+import fs from "fs";
+
+function savePlayer(uuid: string, data: any) {
+  fs.writeFileSync(`./${uuid}.json`, JSON.stringify(data, null, 2));
+  return data;
+}
+
+
 export function fetchBedwarsStats(key: string, uuid: string) {
   return fetch(`https://api.hypixel.net/player?key=${key}&uuid=${uuid}`)
     .then(response => response.json())
@@ -54,6 +62,7 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         console.error("Failed to retrieve player data.");
         return stats;
       }
+      savePlayer(uuid, player);
       let bedwarsStats = player.stats.Bedwars;
       let skywarsStats = player.stats.SkyWars;
       let duelsStats = player.stats.Duels;
@@ -96,10 +105,16 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         stats.duels.losses = duelsStats.losses;
         stats.duels.wlr = Number((Number(duelsStats.wins) / Number(duelsStats.losses)).toFixed(2));
       }
+
       if (player?.rank) {
         stats.rank = {
           ...stats.rank,
           rank: player.rank.replace("_PLUS", "+")
+        };
+      } else if (player?.monthlyPackageRank && player.monthlyPackageRank !== 'NONE') {
+        stats.rank = {
+          ...stats.rank,
+          rank: 'MVP++'
         };
       } else if (player?.newPackageRank) {
         stats.rank = {
