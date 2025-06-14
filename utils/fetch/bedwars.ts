@@ -62,7 +62,6 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         console.error("Failed to retrieve player data.");
         return stats;
       }
-      //savePlayer(uuid, player);
       let bedwarsStats = player.stats.Bedwars;
       let skywarsStats = player.stats.SkyWars;
       let duelsStats = player.stats.Duels;
@@ -105,16 +104,14 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         stats.duels.losses = duelsStats.losses;
         stats.duels.wlr = Number((Number(duelsStats.wins) / Number(duelsStats.losses)).toFixed(2));
       }
-
+      if (player?.monthlyPackageRank && player.monthlyPackageRank !== 'NONE') {
+        stats.rank.rank = "MVP++";
+        stats.rank.color = "yellow";
+      }
       if (player?.rank) {
         stats.rank = {
           ...stats.rank,
           rank: player.rank.replace("_PLUS", "+")
-        };
-      } else if (player?.monthlyPackageRank && player.monthlyPackageRank !== 'NONE') {
-        stats.rank = {
-          ...stats.rank,
-          rank: 'MVP++'
         };
       } else if (player?.newPackageRank) {
         stats.rank = {
@@ -129,7 +126,7 @@ export function fetchBedwarsStats(key: string, uuid: string) {
           stats.rank.color = "#FF6B6B";
           break;
         case "MVP++":
-          stats.rank.color = "yellow";
+          stats.rank.color = "#FFAA00";
           break;
         case "MVP+":
           stats.rank.color = "aqua";
