@@ -1,6 +1,10 @@
 import { ProfileNetworthCalculator } from 'skyhelper-networth';
-
+import fs from 'fs';
+function savePlayer(uuid: string, data: any) {
+  fs.writeFileSync(`./${uuid}.json`, JSON.stringify(data, null, 2));
+}
 async function fetchSkyblockStats(apikey: string, uuid: string) {
+
     try {
       const formattedUuid = uuid.replace(
         /^(\w{8})(\w{4})(\w{4})(\w{4})(\w{12})$/,
@@ -9,7 +13,6 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       
       const hypixelResponse = await fetch(`https://api.hypixel.net/v2/skyblock/profiles?uuid=${formattedUuid}&key=${apikey}`);
       const hypixelData = await hypixelResponse.json();
-      
       if (!hypixelData.success) {
         console.error("Hypixel API error:", hypixelData.cause);
         return {
@@ -28,7 +31,7 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       }
       
       const activeProfile = hypixelData.profiles.find((profile: any) => profile.selected) || hypixelData.profiles[0];
-      if (!activeProfile || !activeProfile.members) {
+      if (!activeProfile) {
         return {
           networth: 0,
           bankBalance: 0,
@@ -138,6 +141,12 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
         const sbXp = profileData.leveling.experience;
         skyblockLevel = Math.floor(sbXp / 100);
       }
+      const activeMembers = Object.entries(activeProfile.members).filter(([memberId, memberData]: [string, any]) => {
+        return !memberData.deletion_notice;
+      });
+      const totalActiveMembers = activeMembers.length;
+      const coopMembersCount = totalActiveMembers - 1; // Subtract 1 for the main player
+      
       return JSON.parse(JSON.stringify({
         networth: networth,
         bankBalance: bankBalance,
@@ -145,7 +154,8 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
         skillAverage: parseFloat(averageSkillLevel.toFixed(2)),
         skillAverageWithProgress: parseFloat(averageSkillLevelWithProgress.toFixed(2)),
         catacombsLevel,
-        skyblockLevel
+        skyblockLevel,
+        coopMembersCount: coopMembersCount
       }));
     } catch (error) {
       console.error('Error fetching Skyblock stats:', error);

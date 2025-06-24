@@ -140,7 +140,7 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   const playerName = username === 'Steve' ? ign : username;
   const pluses = typeof (generalstats as any)?.rank?.rank === 'string' ? ((generalstats as any).rank.rank.match(/\+/g)?.length || 0) : 0;
   const playerNameDisplay = formatPlayerName(
-    (generalstats as any)?.rank || { rank: "NONE", color: "gray", plusColor: "yellow" },
+    (generalstats as any)?.rank || { rank: "NONE", color: "gray", plusColor: "#FFFF00" },
     playerName ? (censor ? `${playerName[0]}${'*'.repeat(Math.max(0, playerName.length - 2))}${playerName[playerName.length - 1]}` : playerName) : 'Unknown',
     pluses
   );
@@ -154,11 +154,12 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   bubbleMC(ctx as any, playerInfoX * 4.2 , centerY - (height * 0.36), bubbleWidth * 4.025, height * 0.055, playerNameDisplay, '', 0.5, 32);
 
   devlog('Creating stats bubbles');
-  createBubble(ctx as any, statsX, centerY - (height * 0.15), bubbleWidth * 1.2, height * 0.231, [
+  createBubble(ctx as any, statsX, centerY - (height * 0.15), bubbleWidth * 1.2, height * 0.27, [
     { text: `<color=#89cff0>Skyblock Level:</color> ${(sbstats as any)?.skyblockLevel || "0"}`, effects: 'bold' },
     { text: `<color=#FFD700>Net Worth:</color> ${(sbstats as any)?.networth ? formatNetWorth((sbstats as any).networth) : "0"}`, effects: 'bold' },
     { text: `<color=#90EE90>Skill Average:</color> ${(sbstats as any)?.skillAverageWithProgress?.toFixed(2) || "0"}`, effects: 'bold' },
-    { text: `<color=#E97451>Catacombs:</color> ${(sbstats as any)?.catacombsLevel || "0"}`, effects: 'bold' }
+    { text: `<color=#E97451>Catacombs:</color> ${(sbstats as any)?.catacombsLevel || "0"}`, effects: 'bold' },
+    { text: `<color=#DDA0DD>Coop Members:</color> ${(sbstats as any)?.coopMembersCount || "0"}`, effects: 'bold' }
   ], 'Skyblock', 0.4);
 
   createBubble(ctx as any, statsX, centerY + (height * 0.125), bubbleWidth * 1.2, height * 0.231, [

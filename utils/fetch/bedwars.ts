@@ -192,7 +192,7 @@ export function fetchBedwarsStats(key: string, uuid: string) {
         rank: {
           rank: "NONE",
           color: "white",
-          plusColor: "yellow",
+          plusColor: "#FFFF00",
         }
       };
     });
