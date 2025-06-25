@@ -142,8 +142,9 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
         skyblockLevel = Math.floor(sbXp / 100);
       }
       const activeMembers = Object.entries(activeProfile.members).filter(([memberId, memberData]: [string, any]) => {
-        return !memberData.deletion_notice;
+        return !(memberData.profile?.coop_invitation?.confirmed === false || memberData.profile?.deletion_notice?.timestamp !== undefined)
       });
+      console.log(`${activeMembers.length} active members`);
       const totalActiveMembers = activeMembers.length;
       const coopMembersCount = totalActiveMembers - 1; // Subtract 1 for the main player
       
