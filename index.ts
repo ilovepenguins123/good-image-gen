@@ -154,7 +154,7 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   bubbleMC(ctx as any, playerInfoX * 4.2 , centerY - (height * 0.36), bubbleWidth * 4.025, height * 0.055, playerNameDisplay, '', 0.5, 32);
 
   devlog('Creating stats bubbles');
-  createBubble(ctx as any, statsX, centerY - (height * 0.15), bubbleWidth * 1.2, height * 0.27, [
+  createBubble(ctx as any, statsX, centerY - (height * 0.15), bubbleWidth * 1.2, height * 0.25, [
     { text: `<color=#89cff0>Skyblock Level:</color> ${(sbstats as any)?.skyblockLevel || "0"}`, effects: 'bold' },
     { text: `<color=#FFD700>Net Worth:</color> ${(sbstats as any)?.networth ? formatNetWorth((sbstats as any).networth) : "0"}`, effects: 'bold' },
     { text: `<color=#90EE90>Skill Average:</color> ${(sbstats as any)?.skillAverageWithProgress?.toFixed(2) || "0"}`, effects: 'bold' },
