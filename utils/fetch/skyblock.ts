@@ -134,7 +134,23 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       let catacombsLevel = 0;
       if (profileData.dungeons?.dungeon_types?.catacombs?.experience) {
         const catacombsXp = profileData.dungeons.dungeon_types.catacombs.experience;
-        catacombsLevel = Math.min(50, Math.floor(Math.pow(catacombsXp / 10000, 0.5) + 1));
+        
+        // Catacombs XP requirements per level
+        const CATACOMBS_XP = [
+          0, 50, 125, 235, 395, 625, 955, 1425, 2095, 3045, 4385, 6275, 8940, 12700, 17960,
+          25340, 35640, 49940, 69940, 97640, 135640, 188140, 259640, 356640, 488640, 668640,
+          911640, 1239640, 1684640, 2284640, 3084640, 4149640, 5559640, 7459640, 9959640,
+          13259640, 17559640, 23159640, 30359640, 39559640, 51559640, 66559640, 85559640,
+          109559640, 139559640, 177559640, 225559640, 285559640, 360559640, 453559640, 569809640
+        ];
+        
+        // Find the level based on XP
+        for (let i = CATACOMBS_XP.length - 1; i >= 0; i--) {
+          if (catacombsXp >= CATACOMBS_XP[i]) {
+            catacombsLevel = i;
+            break;
+          }
+        }
       }
       let skyblockLevel = 0;
       if (profileData.leveling?.experience) {
