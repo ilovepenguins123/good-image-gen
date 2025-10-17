@@ -14,6 +14,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import getBearerIGN from './utils/BearerIGN.ts';
+import hypixelWrapper from './utils/hypixelWrapper.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -179,7 +180,7 @@ async function generateBubbleImage(backgroundPath: string, outputPath: string, i
   drawLevelProgressBar(ctx as any, generalstats, width, height);
 
   createBubble(ctx as any, rightStatsX2, centerY - (height * 0.15), bubbleWidth, height * 0.231, [
-    { text: `<color=#89cff0>Stars:</color> ${(generalstats as any)?.skywars?.level ?? "0"}`, effects: 'bold' },
+    { text: `<color=#89cff0>Stars:</color> ${((generalstats as any)?.skywars?.level ?? "0").toString().replace(/[^\d]/g, '')}`, effects: 'bold' },
     { text: `<color=#90EE90>Kills:</color> ${formatNumber((generalstats as any)?.skywars?.kills ?? 0)}`, effects: 'bold' },
     { text: `<color=#FFD700>Deaths:</color> ${formatNumber((generalstats as any)?.skywars?.deaths ?? 0)}`, effects: 'bold' },
   ], 'Skywars', 0.4);
@@ -317,6 +318,326 @@ function drawPlayerSkin(ctx: CanvasRenderingContext2D, image: Image, width: numb
 const app = express();
 const router = express.Router();
 const port = 3000;
+
+// ============ HYPIXEL API WRAPPER ENDPOINTS ============
+
+/**
+ * GET /api/player/:username
+ * Fetch player stats by username
+ */
+router.get("/api/player/:username", async (req: any, res: any) => {
+  const { username } = req.params;
+  const apiKey = process.env.HYPIXEL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "HYPIXEL_API_KEY not configured" });
+  }
+
+  if (!username) {
+    return res.status(400).json({ error: "Missing username parameter" });
+  }
+
+  try {
+    const data = await hypixelWrapper.getPlayerStats(apiKey, username);
+    res.json(data);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/player/uuid/:uuid
+ * Fetch player stats by UUID
+ */
+router.get("/api/player/uuid/:uuid", async (req: any, res: any) => {
+  const { uuid } = req.params;
+  const apiKey = process.env.HYPIXEL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "HYPIXEL_API_KEY not configured" });
+  }
+
+  if (!uuid) {
+    return res.status(400).json({ error: "Missing uuid parameter" });
+  }
+
+  try {
+    const data = await hypixelWrapper.getPlayerByUUID(apiKey, uuid);
+    res.json(data);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/bedwars/stats/:uuid
+ * Fetch Bedwars stats for a player
+ */
+router.get("/api/bedwars/stats/:uuid", async (req: any, res: any) => {
+  const { uuid } = req.params;
+  const apiKey = process.env.HYPIXEL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "HYPIXEL_API_KEY not configured" });
+  }
+
+  if (!uuid) {
+    return res.status(400).json({ error: "Missing uuid parameter" });
+  }
+
+  try {
+    const data = await hypixelWrapper.getBedwarsStats(apiKey, uuid);
+    res.json(data || { message: "No Bedwars stats found" });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/skyblock/profiles/:uuid
+ * Fetch Skyblock profiles for a player
+ */
+router.get("/api/skyblock/profiles/:uuid", async (req: any, res: any) => {
+  const { uuid } = req.params;
+  const apiKey = process.env.HYPIXEL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "HYPIXEL_API_KEY not configured" });
+  }
+
+  if (!uuid) {
+    return res.status(400).json({ error: "Missing uuid parameter" });
+  }
+
+  try {
+    const data = await hypixelWrapper.getSkyblockProfiles(apiKey, uuid);
+    res.json(data);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/skyblock/profile/:profileId
+ * Fetch specific Skyblock profile details
+ */
+router.get("/api/skyblock/profile/:profileId", async (req: any, res: any) => {
+  const { profileId } = req.params;
+  const apiKey = process.env.HYPIXEL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "HYPIXEL_API_KEY not configured" });
+  }
+
+  if (!profileId) {
+    return res.status(400).json({ error: "Missing profileId parameter" });
+  }
+
+  try {
+    const data = await hypixelWrapper.getSkyblockProfile(apiKey, profileId);
+    res.json(data);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/guild/player/:uuid
+ * Fetch guild information by player UUID
+ */
+router.get("/api/guild/player/:uuid", async (req: any, res: any) => {
+  const { uuid } = req.params;
+  const apiKey = process.env.HYPIXEL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "HYPIXEL_API_KEY not configured" });
+  }
+
+  if (!uuid) {
+    return res.status(400).json({ error: "Missing uuid parameter" });
+  }
+
+  try {
+    const data = await hypixelWrapper.getGuildByPlayer(apiKey, uuid);
+    res.json(data);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/guild/name/:guildName
+ * Fetch guild information by name
+ */
+router.get("/api/guild/name/:guildName", async (req: any, res: any) => {
+  const { guildName } = req.params;
+  const apiKey = process.env.HYPIXEL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "HYPIXEL_API_KEY not configured" });
+  }
+
+  if (!guildName) {
+    return res.status(400).json({ error: "Missing guildName parameter" });
+  }
+
+  try {
+    const data = await hypixelWrapper.getGuildByName(apiKey, guildName);
+    res.json(data);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/cache/stats
+ * Get cache statistics
+ */
+router.get("/api/cache/stats", (req: any, res: any) => {
+  const stats = hypixelWrapper.getCacheStats();
+  res.json({
+    cacheSize: stats.size,
+    cacheDuration: "5 minutes",
+    entries: stats.entries
+  });
+});
+
+/**
+ * POST /api/cache/clear
+ * Clear all cache
+ */
+router.post("/api/cache/clear", (req: any, res: any) => {
+  hypixelWrapper.clearCache();
+  res.json({ message: "Cache cleared successfully" });
+});
+
+/**
+ * POST /api/cache/prune
+ * Remove expired cache entries
+ */
+router.post("/api/cache/prune", (req: any, res: any) => {
+  const removed = hypixelWrapper.pruneExpiredCache();
+  res.json({ message: `Removed ${removed} expired entries` });
+});
+
+/**
+ * GET /api/summary/:username
+ * Get player summary data (Rank, NWL, Gifted, NW, SA, LVL)
+ */
+router.get("/api/summary/:username", async (req: any, res: any) => {
+  const { username } = req.params;
+  const apiKey = process.env.HYPIXEL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "HYPIXEL_API_KEY not configured" });
+  }
+
+  if (!username) {
+    return res.status(400).json({ error: "Missing username parameter" });
+  }
+
+  try {
+    // Get all player stats
+    const statsData = await fetchAllStats(apiKey, username, "", undefined);
+    const { generalstats, sbstats } = statsData;
+
+    // Extract rank
+    const rank = (generalstats as any)?.rank?.rank || "None";
+
+    // Extract Skyblock stats
+    const nwl = (sbstats as any)?.skyblockLevel || 0;
+    const nw = (sbstats as any)?.networth || 0;
+    const sa = (sbstats as any)?.skillAverageWithProgress || 0;
+
+    // Extract gifted ranks
+    const gifted = (generalstats as any)?.ranksgifted || 0;
+
+    // Extract network level
+    const lvl = (generalstats as any)?.leveling?.level || 0;
+
+    res.json({
+      username,
+      Rank: rank,
+      NWL: nwl,
+      Gifted: gifted,
+      NW: formatNetWorth(nw),
+      SA: sa.toFixed(2),
+      LVL: lvl
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/summary/uuid/:uuid
+ * Get player summary data by UUID
+ */
+router.get("/api/summary/uuid/:uuid", async (req: any, res: any) => {
+  const { uuid } = req.params;
+  const apiKey = process.env.HYPIXEL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "HYPIXEL_API_KEY not configured" });
+  }
+
+  if (!uuid) {
+    return res.status(400).json({ error: "Missing uuid parameter" });
+  }
+
+  try {
+    // Get player data by UUID first
+    const playerData = await hypixelWrapper.getPlayerByUUID(apiKey, uuid);
+    if (!playerData.success) {
+      return res.status(404).json({ error: "Player not found" });
+    }
+
+    const username = playerData.player.name;
+
+    // Get all player stats
+    const statsData = await fetchAllStats(apiKey, username, "", uuid);
+    const { generalstats, sbstats } = statsData;
+
+    // Extract rank
+    const rank = (generalstats as any)?.rank?.rank || "None";
+
+    // Extract Skyblock stats
+    const nwl = (sbstats as any)?.skyblockLevel || 0;
+    const nw = (sbstats as any)?.networth || 0;
+    const sa = (sbstats as any)?.skillAverageWithProgress || 0;
+
+    // Extract gifted ranks
+    const gifted = (generalstats as any)?.ranksgifted || 0;
+
+    // Extract network level
+    const lvl = (generalstats as any)?.leveling?.level || 0;
+
+    res.json({
+      username,
+      uuid,
+      Rank: rank,
+      NWL: nwl,
+      Gifted: gifted,
+      NW: formatNetWorth(nw),
+      SA: sa.toFixed(2),
+      LVL: lvl
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+// ============ IMAGE GENERATION ENDPOINTS ============
+
 router.get("/bearer/:bearer", async (req: any, res: any) => {
   const bearer = req.params.bearer;
   if (!bearer) {
