@@ -1,4 +1,5 @@
 import fs from "fs";
+import { getPlayerByUUID } from '../hypixelWrapper.ts';
 
 function savePlayer(uuid: string, data: any) {
   fs.writeFileSync(`./${uuid}.json`, JSON.stringify(data, null, 2));
@@ -6,8 +7,7 @@ function savePlayer(uuid: string, data: any) {
 }
 
 export function fetchBedwarsStats(key: string, uuid: string) {
-  return fetch(`https://api.hypixel.net/player?key=${key}&uuid=${uuid}`)
-    .then(response => response.json())
+  return getPlayerByUUID(key, uuid)
     .then(data => {
       let player = data.player;
       let stats = {

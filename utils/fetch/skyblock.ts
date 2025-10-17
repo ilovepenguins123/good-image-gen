@@ -1,4 +1,5 @@
 import { ProfileNetworthCalculator } from 'skyhelper-networth';
+import { getSkyblockProfiles, getSkyblockMuseum } from '../hypixelWrapper.ts';
 import fs from 'fs';
 function savePlayer(uuid: string, data: any) {
   fs.writeFileSync(`./${uuid}.json`, JSON.stringify(data, null, 2));
@@ -10,9 +11,8 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
         /^(\w{8})(\w{4})(\w{4})(\w{4})(\w{12})$/,
         "$1-$2-$3-$4-$5"
       );
-      
-      const hypixelResponse = await fetch(`https://api.hypixel.net/v2/skyblock/profiles?uuid=${formattedUuid}&key=${apikey}`);
-      const hypixelData = await hypixelResponse.json();
+
+      const hypixelData = await getSkyblockProfiles(apikey, formattedUuid);
       if (!hypixelData.success) {
         console.error("Hypixel API error:", hypixelData.cause);
         return {
@@ -38,8 +38,7 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
           profileData: null
         };
       }
-      const museumResponse = await fetch(`https://api.hypixel.net/v2/skyblock/museum?profile=${activeProfile.profile_id}&key=${apikey}`);
-      const museumData = await museumResponse.json();
+      const museumData = await getSkyblockMuseum(apikey, activeProfile.profile_id);
       
       if (!museumData.success) {
         console.error("Hypixel API error:", museumData.cause);
@@ -61,7 +60,7 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
         };
       }
       
-      const networthData = new ProfileNetworthCalculator(profileData, museumResponse, bankBalance);
+      const networthData = new ProfileNetworthCalculator(profileData, museumData, bankBalance);
 
       const networth = await networthData.getNetworth().then((result) => result.unsoulboundNetworth);
 

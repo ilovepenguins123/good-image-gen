@@ -134,6 +134,18 @@ export async function getSkyblockProfile(apiKey: string, profileId: string): Pro
 }
 
 /**
+ * Fetch Skyblock museum data
+ */
+export async function getSkyblockMuseum(apiKey: string, profileId: string): Promise<any> {
+  const endpoint = 'skyblockMuseum';
+  const params = { key: apiKey, profile_id: profileId };
+  const cacheKey = getCacheKey(endpoint, params);
+
+  const url = `https://api.hypixel.net/v2/skyblock/museum?profile=${profileId}&key=${apiKey}`;
+  return makeRequest(url, cacheKey);
+}
+
+/**
  * Fetch guild information by name
  */
 export async function getGuildByName(apiKey: string, guildName: string): Promise<any> {
@@ -249,6 +261,7 @@ export default {
   getPlayerByUUID,
   getSkyblockProfiles,
   getSkyblockProfile,
+  getSkyblockMuseum,
   getGuildByName,
   getGuildByPlayer,
   getAchievements,

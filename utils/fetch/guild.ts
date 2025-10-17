@@ -1,6 +1,7 @@
+import { getGuildByPlayer } from '../hypixelWrapper.ts';
+
 function fetchGuildStats(key: string, uuid: string) {
-  return fetch(`https://api.hypixel.net/guild?key=${key}&player=${uuid}`)
-    .then(response => response.json())
+  return getGuildByPlayer(key, uuid)
     .then(data => {
       let stats = {
         guild: {
