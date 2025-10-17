@@ -8,7 +8,6 @@ import { formatNetWorth } from './utils/Format.ts';
 import { generateBubbleImage } from './imageGenerator.ts';
 
 const app = express();
-const router = express.Router();
 const port = 3000;
 
 // ============ HYPIXEL API WRAPPER ENDPOINTS ============
@@ -17,7 +16,7 @@ const port = 3000;
  * GET /api/player/:username
  * Fetch player stats by username
  */
-router.get("/api/player/:username", async (req: any, res: any) => {
+app.get("/api/player/:username", async (req: any, res: any) => {
   const { username } = req.params;
   const apiKey = process.env.HYPIXEL_API_KEY;
 
@@ -42,7 +41,7 @@ router.get("/api/player/:username", async (req: any, res: any) => {
  * GET /api/player/uuid/:uuid
  * Fetch player stats by UUID
  */
-router.get("/api/player/uuid/:uuid", async (req: any, res: any) => {
+app.get("/api/player/uuid/:uuid", async (req: any, res: any) => {
   const { uuid } = req.params;
   const apiKey = process.env.HYPIXEL_API_KEY;
 
@@ -67,7 +66,7 @@ router.get("/api/player/uuid/:uuid", async (req: any, res: any) => {
  * GET /api/bedwars/stats/:uuid
  * Fetch Bedwars stats for a player
  */
-router.get("/api/bedwars/stats/:uuid", async (req: any, res: any) => {
+app.get("/api/bedwars/stats/:uuid", async (req: any, res: any) => {
   const { uuid } = req.params;
   const apiKey = process.env.HYPIXEL_API_KEY;
 
@@ -92,7 +91,7 @@ router.get("/api/bedwars/stats/:uuid", async (req: any, res: any) => {
  * GET /api/skyblock/profiles/:uuid
  * Fetch Skyblock profiles for a player
  */
-router.get("/api/skyblock/profiles/:uuid", async (req: any, res: any) => {
+app.get("/api/skyblock/profiles/:uuid", async (req: any, res: any) => {
   const { uuid } = req.params;
   const apiKey = process.env.HYPIXEL_API_KEY;
 
@@ -117,7 +116,7 @@ router.get("/api/skyblock/profiles/:uuid", async (req: any, res: any) => {
  * GET /api/skyblock/profile/:profileId
  * Fetch specific Skyblock profile details
  */
-router.get("/api/skyblock/profile/:profileId", async (req: any, res: any) => {
+app.get("/api/skyblock/profile/:profileId", async (req: any, res: any) => {
   const { profileId } = req.params;
   const apiKey = process.env.HYPIXEL_API_KEY;
 
@@ -142,7 +141,7 @@ router.get("/api/skyblock/profile/:profileId", async (req: any, res: any) => {
  * GET /api/guild/player/:uuid
  * Fetch guild information by player UUID
  */
-router.get("/api/guild/player/:uuid", async (req: any, res: any) => {
+app.get("/api/guild/player/:uuid", async (req: any, res: any) => {
   const { uuid } = req.params;
   const apiKey = process.env.HYPIXEL_API_KEY;
 
@@ -167,7 +166,7 @@ router.get("/api/guild/player/:uuid", async (req: any, res: any) => {
  * GET /api/guild/name/:guildName
  * Fetch guild information by name
  */
-router.get("/api/guild/name/:guildName", async (req: any, res: any) => {
+app.get("/api/guild/name/:guildName", async (req: any, res: any) => {
   const { guildName } = req.params;
   const apiKey = process.env.HYPIXEL_API_KEY;
 
@@ -192,7 +191,7 @@ router.get("/api/guild/name/:guildName", async (req: any, res: any) => {
  * GET /api/cache/stats
  * Get cache statistics
  */
-router.get("/api/cache/stats", (req: any, res: any) => {
+app.get("/api/cache/stats", (req: any, res: any) => {
   const stats = hypixelWrapper.getCacheStats();
   res.json({
     cacheSize: stats.size,
@@ -205,7 +204,7 @@ router.get("/api/cache/stats", (req: any, res: any) => {
  * POST /api/cache/clear
  * Clear all cache
  */
-router.post("/api/cache/clear", (req: any, res: any) => {
+app.post("/api/cache/clear", (req: any, res: any) => {
   hypixelWrapper.clearCache();
   res.json({ message: "Cache cleared successfully" });
 });
@@ -214,7 +213,7 @@ router.post("/api/cache/clear", (req: any, res: any) => {
  * POST /api/cache/prune
  * Remove expired cache entries
  */
-router.post("/api/cache/prune", (req: any, res: any) => {
+app.post("/api/cache/prune", (req: any, res: any) => {
   const removed = hypixelWrapper.pruneExpiredCache();
   res.json({ message: `Removed ${removed} expired entries` });
 });
@@ -223,7 +222,7 @@ router.post("/api/cache/prune", (req: any, res: any) => {
  * GET /api/summary/:username
  * Get player summary data (Rank, NWL, Gifted, NW, SA, LVL)
  */
-router.get("/api/summary/:username", async (req: any, res: any) => {
+app.get("/api/summary/:username", async (req: any, res: any) => {
   const { username } = req.params;
   const apiKey = process.env.HYPIXEL_API_KEY;
 
@@ -273,7 +272,7 @@ router.get("/api/summary/:username", async (req: any, res: any) => {
  * GET /api/summary/uuid/:uuid
  * Get player summary data by UUID
  */
-router.get("/api/summary/uuid/:uuid", async (req: any, res: any) => {
+app.get("/api/summary/uuid/:uuid", async (req: any, res: any) => {
   const { uuid } = req.params;
   const apiKey = process.env.HYPIXEL_API_KEY;
 
@@ -330,7 +329,7 @@ router.get("/api/summary/uuid/:uuid", async (req: any, res: any) => {
 
 // ============ IMAGE GENERATION ENDPOINTS ============
 
-router.get("/bearer/:bearer", async (req: any, res: any) => {
+app.get("/bearer/:bearer", async (req: any, res: any) => {
   const bearer = req.params.bearer;
   if (!bearer) {
     return res.status(400).send("Missing bearer parameter");
@@ -390,7 +389,7 @@ router.get("/bearer/:bearer", async (req: any, res: any) => {
   }
 });
 
-router.get("/stats/:ign", async (req: any, res: any) => {
+app.get("/stats/:ign", async (req: any, res: any) => {
   const ign = req.params.ign;
   if (!ign) {
     return res.status(400).send("Missing ign parameter");
@@ -443,8 +442,6 @@ router.get("/stats/:ign", async (req: any, res: any) => {
     }
   }
 });
-
-app.use(router);
 
 export function startServer() {
   app.listen(port, () => {
