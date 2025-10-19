@@ -28,13 +28,16 @@ export function getCache(type: string, key: string): Promise<any | undefined> {
   });
 }
 
-export function setCache(type: string, key: string, data: any) {
-  const id = Math.random().toString(36).slice(2);
-  worker.postMessage({ 
-    action: 'set', 
-    id, 
-    cacheKey: getCacheKey(type, key), 
-    data, 
-    expires: Date.now() + CACHE_DURATION 
+export function setCache(type: string, key: string, data: any): Promise<boolean> {
+  return new Promise((resolve) => {
+    const id = Math.random().toString(36).slice(2);
+    pending[id] = resolve;
+    worker.postMessage({
+      action: 'set',
+      id,
+      cacheKey: getCacheKey(type, key),
+      data,
+      expires: Date.now() + CACHE_DURATION
+    });
   });
 } 

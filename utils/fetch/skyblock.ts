@@ -7,12 +7,15 @@ function savePlayer(uuid: string, data: any) {
 async function fetchSkyblockStats(apikey: string, uuid: string) {
 
     try {
+      console.log('[DEV] Skyblock: Starting fetch');
       const formattedUuid = uuid.replace(
         /^(\w{8})(\w{4})(\w{4})(\w{4})(\w{12})$/,
         "$1-$2-$3-$4-$5"
       );
 
+      console.log('[DEV] Skyblock: Fetching profiles');
       const hypixelData = await getSkyblockProfiles(apikey, formattedUuid);
+      console.log('[DEV] Skyblock: Profiles fetched');
       if (!hypixelData.success) {
         console.error("Hypixel API error:", hypixelData.cause);
         return {
@@ -38,8 +41,10 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
           profileData: null
         };
       }
+      console.log('[DEV] Skyblock: Fetching museum data');
       const museumData = await getSkyblockMuseum(apikey, activeProfile.profile_id);
-      
+      console.log('[DEV] Skyblock: Museum data fetched');
+
       if (!museumData.success) {
         console.error("Hypixel API error:", museumData.cause);
         return {
@@ -60,9 +65,11 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
         };
       }
       
+      console.log('[DEV] Skyblock: Calculating networth');
       const networthData = new ProfileNetworthCalculator(profileData, museumData, bankBalance);
 
       const networth = await networthData.getNetworth().then((result) => result.unsoulboundNetworth);
+      console.log('[DEV] Skyblock: Networth calculated', { networth });
 
       const COSMETIC_SKILLS = ["runecrafting", "social"];
       const SKILL_NAMES = [
@@ -162,7 +169,8 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       console.log(`${activeMembers.length} active members`);
       const totalActiveMembers = activeMembers.length;
       const coopMembersCount = totalActiveMembers - 1; // Subtract 1 for the main player
-      
+
+      console.log('[DEV] Skyblock: Preparing return data');
       return JSON.parse(JSON.stringify({
         networth: networth,
         bankBalance: bankBalance,

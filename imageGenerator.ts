@@ -124,7 +124,9 @@ export async function generateBubbleImage(
     uuid = uuidResponse.id;
   }
 
+  devlog('Calling fetchAllStats');
   const { generalstats, sbstats, guildStats, capes } = await fetchAllStats(apikey, ign, bearer, uuid);
+  devlog('fetchAllStats completed');
 
   // Use bearer capes if available, otherwise use the fetched capes
   const finalCapes = bearer ? bearerCapes : capes;

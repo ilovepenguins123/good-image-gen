@@ -30,8 +30,9 @@ function runTask(task: any) {
     const worker = getWorker();
     const taskId = Math.random().toString(36).slice(2);
     devlog('Running task', { type: task.type, taskId });
-    
+
     const messageHandler = (message: any) => {
+      devlog('Received message', { messageId: message.id, expectedId: taskId, matches: message.id === taskId });
       if (message.id === taskId) {
         worker.removeListener('message', messageHandler);
         if (message.error) {
@@ -43,7 +44,7 @@ function runTask(task: any) {
         }
       }
     };
-    
+
     worker.on('message', messageHandler);
     worker.postMessage({ ...task, id: taskId });
   });
@@ -95,8 +96,10 @@ async function fetchAllStats(apikey: string, ign: string, bearer: string, uuid?:
     }
 
     devlog('Running tasks in parallel');
-    const results = await Promise.all(tasks.map(task => runTask(task)));
-    devlog('All tasks completed');
+    const taskPromises = tasks.map(task => runTask(task));
+    devlog('Task promises created', { count: taskPromises.length });
+    const results = await Promise.all(taskPromises);
+    devlog('All tasks completed', { resultsCount: results.length });
     
     const [generalstats, sbstats, guildStats, capes] = bearer 
       ? [...results, "None"] // Add "None" for capes when using bearer
