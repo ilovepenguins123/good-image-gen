@@ -8,7 +8,7 @@ import { formatNetWorth } from './utils/Format.ts';
 import { generateBubbleImage } from './imageGenerator.ts';
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // ============ HYPIXEL API WRAPPER ENDPOINTS ============
 
