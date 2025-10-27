@@ -258,7 +258,7 @@ app.get("/api/summary/:username", async (req: any, res: any) => {
       Rank: rank,
       NWL: nwl,
       Gifted: gifted,
-      NW: formatNetWorth(nw),
+      NW: nw,
       SA: sa.toFixed(2),
       LVL: lvl
     });
