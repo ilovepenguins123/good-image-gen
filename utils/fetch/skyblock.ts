@@ -1,4 +1,4 @@
-import { ProfileNetworthCalculator } from 'skyhelper-networth';
+import { ProfileNetworthCalculator, NetworthManager } from 'skyhelper-networth';
 import { getSkyblockProfiles, getSkyblockMuseum } from '../hypixelWrapper.ts';
 import fs from 'fs';
 function savePlayer(uuid: string, data: any) {
@@ -42,10 +42,10 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
         };
       }
       console.log('[DEV] Skyblock: Fetching museum data');
-      const museumData = await getSkyblockMuseum(apikey, activeProfile.profile_id);
+      const museumApi = await getSkyblockMuseum(apikey, activeProfile.profile_id);
       console.log('[DEV] Skyblock: Museum data fetched');
 
-      if (!museumData.success) {
+      if (!museumApi.success) {
         console.error("Hypixel API error:", museumData.cause);
         return {
           networth: 0,
@@ -55,7 +55,10 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       }
       
       const bankBalance = activeProfile.banking?.balance || 0;
-      const profileData = activeProfile.members[uuid.replace(/-/g, '')];
+      const stripped = uuid.replace(/-/g, '');
+      const profileData = activeProfile.members[stripped];
+      // SkyHelper expects museum.members[uuid] shape for the specified player
+      const museumMemberData = museumApi?.members?.[stripped] ?? {};
       
       if (!profileData) {
         return {
@@ -66,15 +69,11 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       }
       
       console.log('[DEV] Skyblock: Calculating networth');
-      const networthData = new ProfileNetworthCalculator(profileData, museumData, bankBalance);
-
-      // Add timeout to networth calculation to prevent hanging
-      const networthPromise = networthData.getNetworth().then((result) => result.unsoulboundNetworth);
-      const timeoutPromise = new Promise<number>((_, reject) => {
-        setTimeout(() => reject(new Error('Networth calculation timed out after 60 seconds')), 60000);
-      });
-
-      const networth = await Promise.race([networthPromise, timeoutPromise]);
+      // Ensure SkyHelper manages its own caching/timeouts. Avoid external race timeout.
+      NetworthManager.setCachePrices(true);
+      const networthCalc = new ProfileNetworthCalculator(profileData, museumMemberData, bankBalance);
+      const networthResult = await networthCalc.getNetworth({ includeItemData: false });
+      const networth = networthResult.unsoulboundNetworth ?? 0;
       console.log('[DEV] Skyblock: Networth calculated', { networth });
 
       const COSMETIC_SKILLS = ["runecrafting", "social"];
