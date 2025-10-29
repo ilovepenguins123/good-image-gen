@@ -8,7 +8,7 @@ import { formatNetWorth } from './utils/Format.ts';
 import { generateBubbleImage } from './imageGenerator.ts';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 // ============ HYPIXEL API WRAPPER ENDPOINTS ============
 
@@ -444,7 +444,7 @@ app.get("/stats/:ign", async (req: any, res: any) => {
 });
 
 export function startServer() {
-  app.listen(port, () => {
-    console.log(`Listening on http://localhost:${port}`);
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`Listening on http://198.46.132.208:${port}`);
   });
 }

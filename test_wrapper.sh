@@ -3,7 +3,7 @@
 # Hypixel API Wrapper Test Script
 # This script demonstrates all wrapper endpoints and caching behavior
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://198.46.132.208:3001"
 
 echo "================================"
 echo "Hypixel API Wrapper Test Suite"

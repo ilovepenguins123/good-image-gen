@@ -1,8 +1,6 @@
-import { Worker } from 'node:worker_threads';
 import MCQuery from './MCQuery.ts';
 import { getCache, setCache } from '../cache.ts';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { getSharedWorker, registerMessageHandler, removeMessageHandler } from '../sharedWorker.ts';
 
 function devlog(stage: string, data?: any) {
   if (process.env.PROD !== 'TRUE') {
@@ -14,51 +12,54 @@ function devlog(stage: string, data?: any) {
   }
 }
 
-const workerPath = path.join(process.cwd(), 'utils', 'fetch', 'worker.ts');
-let worker: Worker | null = null;
-
-function getWorker() {
-  if (!worker) {
-    devlog('Creating new worker');
-    worker = new Worker(workerPath);
-  }
-  return worker;
-}
+// Use shared worker for all operations
 
 function runTask(task: any) {
   return new Promise((resolve, reject) => {
-    const worker = getWorker();
+    const worker = getSharedWorker();
     const taskId = Math.random().toString(36).slice(2);
     devlog('Running task', { type: task.type, taskId });
 
+    // Set up timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      removeMessageHandler(taskId);
+      devlog('Task timeout', { type: task.type, taskId });
+      reject(new Error(`Task ${task.type} timed out after 30 seconds`));
+    }, 30000);
+
     const messageHandler = (message: any) => {
+      clearTimeout(timeout);
       devlog('Received message', { messageId: message.id, expectedId: taskId, matches: message.id === taskId });
-      if (message.id === taskId) {
-        worker.removeListener('message', messageHandler);
-        if (message.error) {
-          devlog('Task error', { type: task.type, error: message.error });
-          reject(new Error(message.error));
-        } else {
-          devlog('Task complete', { type: task.type });
-          resolve(message.result);
-        }
+      if (message.error) {
+        devlog('Task error', { type: task.type, error: message.error });
+        reject(new Error(message.error));
+      } else {
+        devlog('Task complete', { type: task.type });
+        resolve(message.result);
       }
     };
 
-    worker.on('message', messageHandler);
+    registerMessageHandler(taskId, messageHandler);
     worker.postMessage({ ...task, id: taskId });
   });
 }
 
 async function fetchAllStats(apikey: string, ign: string, bearer: string, uuid?: string) {
-  const cacheKey = `${apikey}:${ign}`;
+  const cacheKey = `${apikey}:${ign}${uuid ? `:${uuid}` : ''}`;
   devlog('Checking cache', { cacheKey });
-  
+
   const cached = await getCache('allstats', cacheKey);
   if (cached) {
-    devlog('Using cached stats');
+    devlog('Cache HIT - using cached stats', {
+      cacheKey,
+      hasGeneralStats: !!cached.generalstats,
+      hasSkyblockStats: !!cached.sbstats,
+      hasGuildStats: !!cached.guildStats
+    });
     return cached;
   }
+
+  devlog('Cache MISS - fetching fresh stats', { cacheKey });
 
   try {
     devlog('Starting stats fetch');
@@ -118,9 +119,14 @@ async function fetchAllStats(apikey: string, ign: string, bearer: string, uuid?:
       capes
     };
 
-    devlog('Caching stats');
-    await setCache('allstats', cacheKey, allStats);
-    devlog('Stats cached');
+    devlog('Caching stats', { cacheKey, hasData: !!allStats });
+    try {
+      await setCache('allstats', cacheKey, allStats);
+      devlog('Stats cached successfully');
+    } catch (cacheError) {
+      devlog('Cache set failed', { error: cacheError });
+      // Don't fail the whole operation if caching fails
+    }
     
     return allStats;
 
