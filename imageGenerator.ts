@@ -52,10 +52,26 @@ function devlog(stage: string, data?: any) {
 
 async function getSkinAndRender(uuid: string): Promise<Buffer> {
   try {
-    const response = await fetch(`https://nmsr.nickac.dev/fullbody/${uuid}`);
-    const buffer = await response.arrayBuffer();
-    console.log(uuid)
-    return Buffer.from(buffer);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+    try {
+      const response = await fetch(`https://nmsr.nickac.dev/fullbody/${uuid}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      console.log(uuid)
+      return Buffer.from(buffer);
+    } catch (fetchError) {
+      clearTimeout(timeout);
+      throw fetchError;
+    }
   } catch (error) {
     console.error('Error getting/rendering skin:', error);
     throw new Error('Failed to get or render skin: ' + (error instanceof Error ? error.message : String(error)));

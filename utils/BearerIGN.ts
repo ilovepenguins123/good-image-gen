@@ -6,7 +6,8 @@ async function getBearerIGN(bearer: string) {
         const res = await axios.get("https://api.minecraftservices.com/minecraft/profile", {
             headers: {
                 "Authorization": `Bearer ${bearer}`
-            }
+            },
+            timeout: 15000 // 15 second timeout
         });
         
         let capes = [];
@@ -14,7 +15,8 @@ async function getBearerIGN(bearer: string) {
             for (let cape of res.data.capes) {
                 const capeUrl = cape.url;
                 const capeImage = await axios.get(capeUrl, {
-                    responseType: 'arraybuffer'
+                    responseType: 'arraybuffer',
+                    timeout: 15000 // 15 second timeout
                 });
                 
                 const base64Cape = Buffer.from(capeImage.data).toString('base64');

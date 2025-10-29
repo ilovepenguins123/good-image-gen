@@ -8,7 +8,9 @@ async function fetchCapes(apikey: string, uuid: string) {
         return "None";
     }
 
-    const res = await axios.get(`https://laby.net/api/v3/user/${uuid}/profile`);
+    const res = await axios.get(`https://laby.net/api/v3/user/${uuid}/profile`, {
+        timeout: 15000 // 15 second timeout
+    });
     let capes = [];
 
     if (res.data?.textures?.CAPE) {
@@ -28,7 +30,8 @@ async function fetchCapes(apikey: string, uuid: string) {
                 });
             } catch {
                 const capeImage = await axios.get(`https://laby.net/texture/cape/${capeHash}.png`, {
-                    responseType: 'arraybuffer'
+                    responseType: 'arraybuffer',
+                    timeout: 15000 // 15 second timeout
                 });
                 
                 await fs.mkdir('capes', { recursive: true });

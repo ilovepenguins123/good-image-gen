@@ -1,4 +1,4 @@
-import { ProfileNetworthCalculator, NetworthManager } from 'skyhelper-networth';
+import { ProfileNetworthCalculator } from 'skyhelper-networth';
 import { getSkyblockProfiles, getSkyblockMuseum } from '../hypixelWrapper.ts';
 import fs from 'fs';
 function savePlayer(uuid: string, data: any) {
@@ -46,7 +46,7 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       console.log('[DEV] Skyblock: Museum data fetched');
 
       if (!museumApi.success) {
-        console.error("Hypixel API error:", museumData.cause);
+        console.error("Hypixel API error:", museumApi.cause);
         return {
           networth: 0,
           bankBalance: 0,
@@ -69,10 +69,8 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       }
       
       console.log('[DEV] Skyblock: Calculating networth');
-      // Ensure SkyHelper manages its own caching/timeouts. Avoid external race timeout.
-      NetworthManager.setCachePrices(true);
       const networthCalc = new ProfileNetworthCalculator(profileData, museumMemberData, bankBalance);
-      const networthResult = await networthCalc.getNetworth({ includeItemData: false });
+      const networthResult = await networthCalc.getNetworth();
       const networth = networthResult.unsoulboundNetworth ?? 0;
       console.log('[DEV] Skyblock: Networth calculated', { networth });
 

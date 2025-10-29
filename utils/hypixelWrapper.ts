@@ -91,20 +91,30 @@ async function makeRequest(url: string, cacheKey: string): Promise<any> {
   }
 
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
-    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-    const data = await response.json();
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
 
     if (data.success === false) {
       throw new Error(`Hypixel API Error: ${data.cause || 'Unknown error'}`);
     }
 
-    // Cache successful responses
-    setCache(cacheKey, data);
-    return data;
+      // Cache successful responses
+      setCache(cacheKey, data);
+      return data;
+    } catch (fetchError) {
+      clearTimeout(timeout);
+      throw fetchError;
+    }
   } catch (error) {
     console.error(`[API Error] ${cacheKey}:`, error);
     throw error;
@@ -287,6 +297,24 @@ export function pruneExpiredCache(): number {
 
   return removed;
 }
+
+// Cleanup on process exit
+process.on('SIGTERM', () => {
+  console.log('[DEV] Received SIGTERM, cleaning up hypixel wrapper');
+  stopCleanupInterval();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('[DEV] Received SIGINT, cleaning up hypixel wrapper');
+  stopCleanupInterval();
+  process.exit(0);
+});
+
+process.on('beforeExit', () => {
+  console.log('[DEV] Process beforeExit, cleaning up hypixel wrapper');
+  stopCleanupInterval();
+});
 
 export default {
   getPlayerStats,
