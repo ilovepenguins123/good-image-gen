@@ -14,18 +14,26 @@ function devlog(stage: string, data?: any) {
 
 // Use shared worker for all operations
 
-function runTask(task: any) {
+type TaskRequest = {
+  type: string;
+  timeoutMs?: number;
+  [key: string]: unknown;
+};
+
+function runTask(task: TaskRequest) {
   return new Promise((resolve, reject) => {
     const worker = getSharedWorker();
     const taskId = Math.random().toString(36).slice(2);
     devlog('Running task', { type: task.type, taskId });
 
     // Set up timeout to prevent hanging
+    const timeoutDuration = typeof task.timeoutMs === 'number' ? task.timeoutMs : 30000;
     const timeout = setTimeout(() => {
       removeMessageHandler(taskId);
-      devlog('Task timeout', { type: task.type, taskId });
-      reject(new Error(`Task ${task.type} timed out after 30 seconds`));
-    }, 30000);
+      devlog('Task timeout', { type: task.type, taskId, timeoutDuration });
+      const seconds = Math.round(timeoutDuration / 1000);
+      reject(new Error(`Task ${task.type} timed out after ${seconds}s`));
+    }, timeoutDuration);
 
     const messageHandler = (message: any) => {
       clearTimeout(timeout);
@@ -40,7 +48,8 @@ function runTask(task: any) {
     };
 
     registerMessageHandler(taskId, messageHandler);
-    worker.postMessage({ ...task, id: taskId });
+    const { timeoutMs, ...rest } = task;
+    worker.postMessage({ ...rest, id: taskId });
   });
 }
 
@@ -87,7 +96,8 @@ async function fetchAllStats(apikey: string, ign: string, bearer: string, uuid?:
 
     const tasks = [
       { type: 'bedwars', apikey, uuid: finalUuid },
-      { type: 'skyblock', apikey, uuid: finalUuid },
+      // Allow extra time for skyblock since networth calculations can take longer than other tasks
+      { type: 'skyblock', apikey, uuid: finalUuid, timeoutMs: 90000 },
       { type: 'guildStats', apikey, uuid: finalUuid }
     ];
 

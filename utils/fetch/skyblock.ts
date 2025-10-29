@@ -68,7 +68,13 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       console.log('[DEV] Skyblock: Calculating networth');
       const networthData = new ProfileNetworthCalculator(profileData, museumData, bankBalance);
 
-      const networth = await networthData.getNetworth().then((result) => result.unsoulboundNetworth);
+      // Add timeout to networth calculation to prevent hanging
+      const networthPromise = networthData.getNetworth().then((result) => result.unsoulboundNetworth);
+      const timeoutPromise = new Promise<number>((_, reject) => {
+        setTimeout(() => reject(new Error('Networth calculation timed out after 60 seconds')), 60000);
+      });
+
+      const networth = await Promise.race([networthPromise, timeoutPromise]);
       console.log('[DEV] Skyblock: Networth calculated', { networth });
 
       const COSMETIC_SKILLS = ["runecrafting", "social"];
