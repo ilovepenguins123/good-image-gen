@@ -12,8 +12,11 @@ export function getCache(type: string, key: string): Promise<any | undefined> {
     const id = Math.random().toString(36).slice(2);
 
     const handler = (message: any) => {
-      pending[id](message.result);
-      delete pending[id];
+      if (pending[id]) {
+        pending[id](message.result);
+        delete pending[id];
+      }
+      removeMessageHandler(id); // Ensure cleanup
     };
 
     pending[id] = resolve;
@@ -29,8 +32,11 @@ export function setCache(type: string, key: string, data: any): Promise<boolean>
     const id = Math.random().toString(36).slice(2);
 
     const handler = (message: any) => {
-      pending[id](message.result);
-      delete pending[id];
+      if (pending[id]) {
+        pending[id](message.result);
+        delete pending[id];
+      }
+      removeMessageHandler(id); // Ensure cleanup
     };
 
     pending[id] = resolve;

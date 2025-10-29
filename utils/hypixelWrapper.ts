@@ -15,6 +15,27 @@ interface CacheStore {
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 let cache: CacheStore = {};
 
+// Automatic cleanup interval to prevent memory leaks
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+function startCleanupInterval() {
+  if (cleanupInterval) return;
+
+  cleanupInterval = setInterval(() => {
+    const removed = pruneExpiredCache();
+    if (removed > 0) {
+      console.log(`[Cache AUTO-CLEANUP] Removed ${removed} expired entries`);
+    }
+  }, CACHE_DURATION); // Run cleanup every 5 minutes
+}
+
+function stopCleanupInterval() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+}
+
 /**
  * Generate a cache key based on endpoint and parameters
  */
@@ -47,6 +68,11 @@ function getFromCache(key: string): any | null {
  * Store data in cache
  */
 function setCache(key: string, data: any): void {
+  // Start cleanup interval on first cache set
+  if (Object.keys(cache).length === 0) {
+    startCleanupInterval();
+  }
+
   cache[key] = {
     data,
     timestamp: Date.now()
@@ -214,6 +240,7 @@ export async function getSkyblockStats(apiKey: string, uuid: string): Promise<an
 export function clearCache(): void {
   const count = Object.keys(cache).length;
   cache = {};
+  stopCleanupInterval(); // Stop cleanup when cache is empty
   console.log(`[Cache CLEARED] Removed ${count} entries`);
 }
 
@@ -247,6 +274,11 @@ export function pruneExpiredCache(): number {
       delete cache[key];
       removed++;
     }
+  }
+
+  // Stop cleanup interval if cache becomes empty
+  if (Object.keys(cache).length === 0) {
+    stopCleanupInterval();
   }
 
   if (removed > 0) {

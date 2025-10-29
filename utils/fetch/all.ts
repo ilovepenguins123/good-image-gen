@@ -37,6 +37,7 @@ function runTask(task: TaskRequest) {
 
     const messageHandler = (message: any) => {
       clearTimeout(timeout);
+      removeMessageHandler(taskId); // Ensure cleanup
       devlog('Received message', { messageId: message.id, expectedId: taskId, matches: message.id === taskId });
       if (message.error) {
         devlog('Task error', { type: task.type, error: message.error });
