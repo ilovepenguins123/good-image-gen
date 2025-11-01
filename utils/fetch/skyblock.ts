@@ -73,7 +73,7 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       const networthResult = await networthCalc.getNetworth();
       const networth = networthResult.unsoulboundNetworth ?? 0;
       const unsoulboundNetworth = networthResult.unsoulboundNetworth ?? 0;
-      const soulboundNetworth = networthResult.soulboundNetworth ?? 0;
+      const soulboundNetworth = networthResult.networth ?? 0;
       console.log('[DEV] Skyblock: Networth calculated', { networth, unsoulboundNetworth, soulboundNetworth });
 
       const COSMETIC_SKILLS = ["runecrafting", "social"];
