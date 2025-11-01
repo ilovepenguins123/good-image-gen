@@ -72,7 +72,9 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       const networthCalc = new ProfileNetworthCalculator(profileData, museumMemberData, bankBalance);
       const networthResult = await networthCalc.getNetworth();
       const networth = networthResult.unsoulboundNetworth ?? 0;
-      console.log('[DEV] Skyblock: Networth calculated', { networth });
+      const unsoulboundNetworth = networthResult.unsoulboundNetworth ?? 0;
+      const soulboundNetworth = networthResult.soulboundNetworth ?? 0;
+      console.log('[DEV] Skyblock: Networth calculated', { networth, unsoulboundNetworth, soulboundNetworth });
 
       const COSMETIC_SKILLS = ["runecrafting", "social"];
       const SKILL_NAMES = [
@@ -176,6 +178,8 @@ async function fetchSkyblockStats(apikey: string, uuid: string) {
       console.log('[DEV] Skyblock: Preparing return data');
       return JSON.parse(JSON.stringify({
         networth: networth,
+        unsoulboundNetworth: unsoulboundNetworth,
+        soulboundNetworth: soulboundNetworth,
         bankBalance: bankBalance,
         profileData: profileData,
         skillAverage: parseFloat(averageSkillLevel.toFixed(2)),

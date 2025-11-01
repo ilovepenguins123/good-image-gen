@@ -87,6 +87,143 @@ curl "http://localhost:3000/api/guild/name/Hypixel"
 
 ---
 
+### Summary Endpoints
+
+#### `GET /api/summary/:username`
+Get player summary data (Rank, NWL, Gifted, NW, UnsoulboundNW, SoulboundNW, SA, LVL, Catacombs, CoopMembers)
+```bash
+curl "http://localhost:3000/api/summary/Technoblade"
+```
+**Response**:
+```json
+{
+  "username": "Technoblade",
+  "Rank": "PIG+++",
+  "NWL": 123.45,
+  "Gifted": 5,
+  "NW": 1234567890,
+  "UnsoulboundNW": 1200000000,
+  "SoulboundNW": 34567890,
+  "SA": "52.43",
+  "LVL": 234,
+  "Catacombs": 42,
+  "CoopMembers": 3
+}
+```
+
+#### `GET /api/summary/uuid/:uuid`
+Get player summary data by UUID
+```bash
+curl "http://localhost:3000/api/summary/uuid/99f00191e5fb47e8b8061afc906e7e77"
+```
+**Response**: Same as above, plus `uuid` field and formatted networth values
+
+---
+
+## Mojang API Endpoints (NEW)
+
+### UUID Lookup Endpoints
+
+#### `GET /api/mojang/uuid/:username`
+Get UUID from Minecraft username
+```bash
+curl "http://localhost:3000/api/mojang/uuid/Technoblade"
+```
+**Response**:
+```json
+{
+  "username": "Technoblade",
+  "uuid": "99f00191e5fb47e8b8061afc906e7e77",
+  "formatted_uuid": "99f00191-e5fb-47e8-b806-1afc906e7e77"
+}
+```
+
+#### `GET /api/mojang/username/:uuid`
+Get current username from UUID
+```bash
+curl "http://localhost:3000/api/mojang/username/99f00191e5fb47e8b8061afc906e7e77"
+```
+**Response**:
+```json
+{
+  "uuid": "99f00191e5fb47e8b8061afc906e7e77",
+  "username": "Technoblade",
+  "formatted_uuid": "99f00191-e5fb-47e8-b806-1afc906e7e77"
+}
+```
+
+#### `GET /api/mojang/history/:uuid`
+Get username history for a UUID
+```bash
+curl "http://localhost:3000/api/mojang/history/99f00191e5fb47e8b8061afc906e7e77"
+```
+**Response**:
+```json
+{
+  "uuid": "99f00191e5fb47e8b8061afc906e7e77",
+  "formatted_uuid": "99f00191-e5fb-47e8-b806-1afc906e7e77",
+  "name_history": [
+    {"name": "Technoblade"}
+  ]
+}
+```
+
+#### `GET /api/mojang/profile/:uuid`
+Get full profile information including skin data
+```bash
+curl "http://localhost:3000/api/mojang/profile/99f00191e5fb47e8b8061afc906e7e77"
+```
+**Response**:
+```json
+{
+  "uuid": "99f00191e5fb47e8b8061afc906e7e77",
+  "username": "Technoblade",
+  "formatted_uuid": "99f00191-e5fb-47e8-b806-1afc906e7e77",
+  "properties": [...],
+  "skin_data": {
+    "textures": {
+      "SKIN": {
+        "url": "http://textures.minecraft.net/texture/..."
+      }
+    }
+  }
+}
+```
+
+#### `POST /api/mojang/bulk/uuids`
+Get UUIDs for multiple usernames (max 10 per request)
+```bash
+curl -X POST "http://localhost:3000/api/mojang/bulk/uuids" \
+  -H "Content-Type: application/json" \
+  -d '{"usernames": ["Technoblade", "Notch", "Hypixel"]}'
+```
+**Request Body**:
+```json
+{
+  "usernames": ["Technoblade", "Notch", "Hypixel"]
+}
+```
+**Response**:
+```json
+{
+  "requested": ["Technoblade", "Notch", "Hypixel"],
+  "found": [
+    {
+      "username": "Technoblade",
+      "uuid": "99f00191e5fb47e8b8061afc906e7e77",
+      "formatted_uuid": "99f00191-e5fb-47e8-b806-1afc906e7e77"
+    },
+    {
+      "username": "Notch",
+      "uuid": "069a79f444e94726a5befca90e38aaf5",
+      "formatted_uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5"
+    }
+  ]
+}
+```
+
+---
+
 ### Cache Management Endpoints
 
 #### `GET /api/cache/stats`
@@ -177,9 +314,9 @@ curl "http://localhost:3000/bearer/your-bearer-token" -o stats.png
 |------|---------|
 | 200 | Request successful |
 | 400 | Missing or invalid parameters |
-| 404 | Player/guild not found |
+| 404 | Player/guild/UUID not found |
 | 429 | Rate limited by Hypixel API |
-| 500 | Server error or API key not configured |
+| 500 | Server error, API key not configured, or Mojang API error |
 
 ---
 
@@ -249,6 +386,36 @@ curl -X POST "http://localhost:3000/api/cache/clear"
 curl "http://localhost:3000/api/cache/stats"
 ```
 
+### Example 5: Get UUID from Username, Then Hypixel Data
+```bash
+# Get UUID from Mojang API
+MOJANG_DATA=$(curl -s "http://localhost:3000/api/mojang/uuid/Technoblade")
+UUID=$(echo $MOJANG_DATA | jq -r '.uuid')
+
+# Use UUID to get Hypixel player data
+curl "http://localhost:3000/api/player/uuid/$UUID"
+
+# Get Bedwars stats using the same UUID
+curl "http://localhost:3000/api/bedwars/stats/$UUID"
+```
+
+### Example 6: Bulk UUID Lookup
+```bash
+# Get UUIDs for multiple players at once
+curl -X POST "http://localhost:3000/api/mojang/bulk/uuids" \
+  -H "Content-Type: application/json" \
+  -d '{"usernames": ["Technoblade", "Notch", "Hypixel", "jeb_"]}'
+```
+
+### Example 7: Check Username History
+```bash
+# Get current username from UUID
+curl "http://localhost:3000/api/mojang/username/069a79f444e94726a5befca90e38aaf5"
+
+# Get full username history
+curl "http://localhost:3000/api/mojang/history/069a79f444e94726a5befca90e38aaf5"
+```
+
 ---
 
 ## Error Handling
@@ -286,6 +453,22 @@ Fix: Wait or use cache, adjust request frequency
 }
 ```
 Fix: Provide required URL parameter
+
+**Mojang API Errors**
+```json
+{
+  "error": "Player not found"
+}
+```
+Fix: Check that the username/UUID exists
+
+**Invalid Bulk Request**
+```json
+{
+  "error": "Maximum 10 usernames allowed per request"
+}
+```
+Fix: Reduce the number of usernames in the request
 
 ---
 

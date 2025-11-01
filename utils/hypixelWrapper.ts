@@ -26,7 +26,7 @@ function startCleanupInterval() {
     if (removed > 0) {
       console.log(`[Cache AUTO-CLEANUP] Removed ${removed} expired entries`);
     }
-  }, CACHE_DURATION); // Run cleanup every 5 minutes
+  }, CACHE_DURATION * 2); // Run cleanup every 10 minutes (2x cache duration)
 }
 
 function stopCleanupInterval() {
@@ -68,8 +68,8 @@ function getFromCache(key: string): any | null {
  * Store data in cache
  */
 function setCache(key: string, data: any): void {
-  // Start cleanup interval on first cache set
-  if (Object.keys(cache).length === 0) {
+  // Start cleanup interval if not already running
+  if (!cleanupInterval) {
     startCleanupInterval();
   }
 
@@ -284,11 +284,6 @@ export function pruneExpiredCache(): number {
       delete cache[key];
       removed++;
     }
-  }
-
-  // Stop cleanup interval if cache becomes empty
-  if (Object.keys(cache).length === 0) {
-    stopCleanupInterval();
   }
 
   if (removed > 0) {

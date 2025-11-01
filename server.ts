@@ -10,6 +10,9 @@ import { generateBubbleImage } from './imageGenerator.ts';
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Add JSON body parsing middleware for POST requests
+app.use(express.json());
+
 // ============ HYPIXEL API WRAPPER ENDPOINTS ============
 
 /**
@@ -245,7 +248,11 @@ app.get("/api/summary/:username", async (req: any, res: any) => {
     // Extract Skyblock stats
     const nwl = (sbstats as any)?.skyblockLevel || 0;
     const nw = (sbstats as any)?.networth || 0;
+    const unsoulboundNW = (sbstats as any)?.unsoulboundNetworth || 0;
+    const soulboundNW = (sbstats as any)?.soulboundNetworth || 0;
     const sa = (sbstats as any)?.skillAverageWithProgress || 0;
+    const catacombs = (sbstats as any)?.catacombsLevel || 0;
+    const coopMembers = (sbstats as any)?.coopMembersCount || 0;
 
     // Extract gifted ranks
     const gifted = (generalstats as any)?.ranksgifted || 0;
@@ -259,8 +266,12 @@ app.get("/api/summary/:username", async (req: any, res: any) => {
       NWL: nwl,
       Gifted: gifted,
       NW: nw,
+      UnsoulboundNW: unsoulboundNW,
+      SoulboundNW: soulboundNW,
       SA: sa.toFixed(2),
-      LVL: lvl
+      LVL: lvl,
+      Catacombs: catacombs,
+      CoopMembers: coopMembers
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -303,7 +314,11 @@ app.get("/api/summary/uuid/:uuid", async (req: any, res: any) => {
     // Extract Skyblock stats
     const nwl = (sbstats as any)?.skyblockLevel || 0;
     const nw = (sbstats as any)?.networth || 0;
+    const unsoulboundNW = (sbstats as any)?.unsoulboundNetworth || 0;
+    const soulboundNW = (sbstats as any)?.soulboundNetworth || 0;
     const sa = (sbstats as any)?.skillAverageWithProgress || 0;
+    const catacombs = (sbstats as any)?.catacombsLevel || 0;
+    const coopMembers = (sbstats as any)?.coopMembersCount || 0;
 
     // Extract gifted ranks
     const gifted = (generalstats as any)?.ranksgifted || 0;
@@ -318,8 +333,217 @@ app.get("/api/summary/uuid/:uuid", async (req: any, res: any) => {
       NWL: nwl,
       Gifted: gifted,
       NW: formatNetWorth(nw),
+      UnsoulboundNW: formatNetWorth(unsoulboundNW),
+      SoulboundNW: formatNetWorth(soulboundNW),
       SA: sa.toFixed(2),
-      LVL: lvl
+      LVL: lvl,
+      Catacombs: catacombs,
+      CoopMembers: coopMembers
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+// ============ MOJANG API ENDPOINTS ============
+
+/**
+ * GET /api/mojang/uuid/:username
+ * Get UUID from Minecraft username
+ */
+app.get("/api/mojang/uuid/:username", async (req: any, res: any) => {
+  const { username } = req.params;
+
+  if (!username) {
+    return res.status(400).json({ error: "Missing username parameter" });
+  }
+
+  try {
+    const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return res.status(404).json({ error: "Player not found" });
+      }
+      throw new Error(`Mojang API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json({
+      username: data.name,
+      uuid: data.id,
+      formatted_uuid: data.id.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/mojang/username/:uuid
+ * Get current username from UUID
+ */
+app.get("/api/mojang/username/:uuid", async (req: any, res: any) => {
+  const { uuid } = req.params;
+
+  if (!uuid) {
+    return res.status(400).json({ error: "Missing uuid parameter" });
+  }
+
+  // Remove dashes from UUID if present
+  const cleanUuid = uuid.replace(/-/g, '');
+
+  try {
+    const response = await fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${cleanUuid}`);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return res.status(404).json({ error: "Player not found" });
+      }
+      throw new Error(`Mojang API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json({
+      uuid: data.id,
+      username: data.name,
+      formatted_uuid: data.id.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/mojang/history/:uuid
+ * Get username history for a UUID
+ */
+app.get("/api/mojang/history/:uuid", async (req: any, res: any) => {
+  const { uuid } = req.params;
+
+  if (!uuid) {
+    return res.status(400).json({ error: "Missing uuid parameter" });
+  }
+
+  // Remove dashes from UUID if present
+  const cleanUuid = uuid.replace(/-/g, '');
+
+  try {
+    const response = await fetch(`https://api.mojang.com/user/profiles/${cleanUuid}/names`);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return res.status(404).json({ error: "Player not found" });
+      }
+      throw new Error(`Mojang API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json({
+      uuid: cleanUuid,
+      formatted_uuid: cleanUuid.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5'),
+      name_history: data
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * GET /api/mojang/profile/:uuid
+ * Get full profile information including skin data
+ */
+app.get("/api/mojang/profile/:uuid", async (req: any, res: any) => {
+  const { uuid } = req.params;
+
+  if (!uuid) {
+    return res.status(400).json({ error: "Missing uuid parameter" });
+  }
+
+  // Remove dashes from UUID if present
+  const cleanUuid = uuid.replace(/-/g, '');
+
+  try {
+    const response = await fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${cleanUuid}`);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return res.status(404).json({ error: "Player not found" });
+      }
+      throw new Error(`Mojang API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Parse skin data if available
+    let skinData = null;
+    if (data.properties && data.properties.length > 0) {
+      const texturesProperty = data.properties.find((prop: any) => prop.name === 'textures');
+      if (texturesProperty) {
+        try {
+          const decodedTextures = JSON.parse(Buffer.from(texturesProperty.value, 'base64').toString());
+          skinData = decodedTextures;
+        } catch (e) {
+          console.warn('Failed to parse textures property:', e);
+        }
+      }
+    }
+
+    res.json({
+      uuid: data.id,
+      username: data.name,
+      formatted_uuid: data.id.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5'),
+      properties: data.properties,
+      skin_data: skinData
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * POST /api/mojang/bulk/uuids
+ * Get UUIDs for multiple usernames (max 10 per request)
+ */
+app.post("/api/mojang/bulk/uuids", async (req: any, res: any) => {
+  const { usernames } = req.body;
+
+  if (!usernames || !Array.isArray(usernames)) {
+    return res.status(400).json({ error: "Missing or invalid usernames array in request body" });
+  }
+
+  if (usernames.length > 10) {
+    return res.status(400).json({ error: "Maximum 10 usernames allowed per request" });
+  }
+
+  try {
+    const response = await fetch('https://api.mojang.com/profiles/minecraft', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(usernames)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Mojang API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const formattedData = data.map((player: any) => ({
+      username: player.name,
+      uuid: player.id,
+      formatted_uuid: player.id.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5')
+    }));
+
+    res.json({
+      requested: usernames,
+      found: formattedData
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
